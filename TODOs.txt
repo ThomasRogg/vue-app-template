@@ -10,7 +10,8 @@ CSS conflict info
 reboot CSS      https://getbootstrap.com/docs/4.3/content/reboot/
 box stling CSS
 native fonts
-
+better error messages
+log for accesses
 files.get based on promises
 mangle does not change global vars in module
 watch files and remove cache

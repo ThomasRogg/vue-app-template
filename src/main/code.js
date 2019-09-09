@@ -76,20 +76,22 @@ async function main() {
         if(loadedModules[path])
             return loadedModules[path];
 
-        if(!loadedModulesAsync[path])
-            loadedModulesAsync[path] = async function() {
+        let loadedPromise = loadedModulesAsync[path];
+        if(!loadedPromise)
+            loadedPromise = loadedModulesAsync[path] = async function() {
                 let response = await fetch(path, { method: 'POST' });      // POST to make sure we get static files
                 if(response.status < 200 || response.status >= 300)
                     throw new Error('fetch of ' + path + ' failed with status code ' + response.status);
 
                 return loadModule(path, await response.text());
-            };
-        return await loadedModulesAsync[path]();
+            }();
+        return await loadedPromise;
     }
 
     async function loadComponent(name) {
-        if(!loadedComponents[name])
-            loadedComponents[name] = async function() {
+        let loadedPromise = loadedComponents[name];
+        if(!loadedPromise)
+            loadedPromise = loadedComponents[name] = async function() {
                 let elems = [
                     requireAbsoluteAsync('/components/' + name + '/code'),
                     fetch('/components/' + name + '/template.html', { method: 'POST' })
@@ -120,8 +122,8 @@ async function main() {
                 }
 
                 return code.component;
-            };
-        return await loadedComponents[name]();
+            }();
+        return await loadedPromise;
     }
 
     function panic(err) {
