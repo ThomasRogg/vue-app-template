@@ -1,0 +1,19 @@
+* {
+	font-family: 'Arial', sans-serif;
+	font-size: 12pt;
+	line-height: 12pt;
+}
+
+body {
+    position: relative;
+}
+.overlay {
+	z-index: 1000;
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	background-color: white;
+	padding: 20px 20px 20px 20px;
+}

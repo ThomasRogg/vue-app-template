@@ -1,0 +1,59 @@
+*** THINGS TO DO, ONLY INTERNAL FOR TR ***
+
+Doku 
+Load js after slow Image?
+.component raus
+CSS conflict info
+
+files.get based on promises
+mangle does not change global vars in module
+watch files and remove cache
+ssr optional
+remove SRC_PATH
+Preload all libraries in parallel => panic usw is not set outside o loop :-/
+should be able to run without javascript on client
+javascript ausschaltbar => wird bei IE gemacht
+robots.txt
+favicon.ico
+api call.. auch mit websockets nativ
+websockets auto reload if watch
+load all components at ocne which are needed on start
+http2 over browserslist
+
+src change => reload mod
+get rid of caching
+component must be able to be a async function
+max post size
+title and meta tags
+global server store (for users)
+log
+require1k => eigene version mit timeout.. bei debug mode warning wegen anchladen
+error pages for everything
+production/debug mode better
+https in config
+loading thru store
+license
+comments
+file caching
+client side reload component
+
+auto sitemap
+
+auto delete logs
+log content including access
+
+MANY comments
+in docs: compression instead of minification
+https://www.freecodecamp.org/news/you-might-not-need-to-transpile-your-javascript-4d5e0a438ca/
+youmightnotneedjquery
+
+routes
+local storage
+api put
+api websocket
+http/2
+
+
+NOPE:
+webix vs shemantic ui vs bootstrap
+different languages
