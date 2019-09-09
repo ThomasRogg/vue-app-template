@@ -23,7 +23,7 @@ if(config.ENABLE_COMPRESSION)
  * error page
  */
 
-async function handleResponse(req, res) {
+async function handleResponse(req, res, body) {
     let ext;
 
     // Prefer gzip to work around IE 11 bug
@@ -123,7 +123,31 @@ async function handleResponse(req, res) {
 }
 
 function handleRequest(req, res) {
-    handleResponse(req, res);
+    let data = [], allSize = 0;
+
+    req.on('data', (chunk) => {
+        if(!data)
+            return;
+
+        allSize += chunk.length;
+        if(allSize > config.MAX_BODY_SIZE) {
+            console.error('reached maximum body size');
+
+            res.statusCode = 500;
+            res.end();
+
+            data = null;
+            return;
+        }
+
+        data.push(chunk);
+    });
+    req.on('end', () => {
+        if(!data)
+            return;
+
+        handleResponse(req, res, Buffer.concat(data));
+    });
 }
 
 async function main() {

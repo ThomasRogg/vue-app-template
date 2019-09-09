@@ -1,9 +1,15 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
+http auf https => redirect mit http
+
 Doku 
 Load js after slow Image?
 .component raus
 CSS conflict info
+
+reboot CSS      https://getbootstrap.com/docs/4.3/content/reboot/
+box stling CSS
+native fonts
 
 files.get based on promises
 mangle does not change global vars in module
@@ -27,7 +33,6 @@ max post size
 title and meta tags
 global server store (for users)
 log
-require1k => eigene version mit timeout.. bei debug mode warning wegen anchladen
 error pages for everything
 production/debug mode better
 https in config
@@ -53,7 +58,4 @@ api put
 api websocket
 http/2
 
-
-NOPE:
-webix vs shemantic ui vs bootstrap
 different languages
