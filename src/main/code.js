@@ -5,14 +5,122 @@
  */
 
 async function main() {
+    const FETCH_TIMEOUT_MS = 30000;
+
     let loadedModules = {}, loadedModulesAsync = {}, loadedComponents = {};
+    let connectionErrorCount = 0;
 
-    function serverFetchSync() {
-
+    function connectionError(inc) {
+        if(inc) {
+            if(!connectionErrorCount++)
+                document.getElementById('overlayNoConnection').style.display = '';
+        } else {
+            if(!--connectionErrorCount) {
+                document.getElementById('overlayNoConnection').style.display = 'none';
+            }
+        }
     }
 
-    async function serverFetchAsync() {
+    function serverFetchSync(url, options) {
+        let isStatus = true;
+        function status(isStatusNow) {
+            if(!isStatus && isStatusNow)
+                connectionError(false);
+            else if(isStatus && !isStatusNow)
+                connectionError(true);
+            isStatus = isStatusNow;
+        }
 
+        while(true) {
+            try {
+                let request = new XMLHttpRequest();
+                request.open('POST', url, false);
+                request.send(null);
+
+                if(request.status >= 200 && request.status < 300) {
+                    status(true);
+                    return request.responseText;
+                } else if(request.status == 404) {
+                    if(options && options.fileNotFoundOK)
+                        status(true);
+                    else {
+                        document.getElementById('overlayFileNotFound').style.display = '';
+                        throw new Error(url + ' not found');
+                    }
+                    return;
+                } else if(request.status) {
+                    panic('syncronous fetch of ' + url + ' returned status code ' + request.status);
+                    return;
+                }
+            } catch(e) {
+                console.error(e);
+            }
+            status(false);
+        }
+    }
+
+    function serverFetchAsync(url, options) {
+        let isStatus = true;
+        function status(isStatusNow) {
+            if(!isStatus && isStatusNow)
+                connectionError(false);
+            else if(isStatus && !isStatusNow)
+                connectionError(true);
+            isStatus = isStatusNow;
+        }
+
+        return new Promise((resolve, reject) => {
+            function loop1() {
+                let done = false;
+
+                let request = new XMLHttpRequest();
+                request.timeout = FETCH_TIMEOUT_MS;
+
+                request.onload = () => {
+                    if(done)
+                        return;
+                    done = true;
+
+                    if(request.status >= 200 && request.status < 300) {
+                        status(true);
+                        resolve(request.responseText);
+                    } else if(request.status == 404) {
+                        if(options && options.fileNotFoundOK) {
+                            status(true);
+                            resolve();
+                        } else {
+                            console.error(url + ' not found');
+                            document.getElementById('overlayFileNotFound').style.display = '';
+                        }
+                    } else if(request.status)
+                        panic('asyncronous fetch of ' + url + ' returned status code ' + request.status);
+                    else {
+                        status(false);
+                        setTimeout(loop1, 1000);
+                    }
+                };
+                request.onerror = () => {
+                    if(done)
+                        return;
+                    done = true;
+
+                    status(false);
+                    setTimeout(loop1, 1000);
+                };
+                request.ontimeout = () => {
+                    if(done)
+                        return;
+                    done = true;
+
+                    status(false);
+                    loop1();
+                };
+
+                request.open('POST', url, true);
+                request.send();
+            }
+            loop1();
+        });
     }
 
     function pathJoin(baseFile, file) {
@@ -59,13 +167,8 @@ async function main() {
 
         console.warn('Fetching ' + path + ' in blocking mode as not loaded yet. Please use await require(\'[...]/main/lib\').requireAsync(\'' + origPath + '\') instead of require');
 
-        let request = new XMLHttpRequest();
-        request.open('POST', path, false);                         // POST to make sure we get static files
-        request.send(null);
-
-        if(request.status < 200 || request.status >= 300)
-            throw new Error('fetch of ' + path + ' failed with status code ' + request.status);
-        return loadModule(path, request.responseText);
+        let request = serverFetchSync(path);
+        return loadModule(path, request);
     }
 
     async function requireAbsoluteAsync(path) {
@@ -79,11 +182,8 @@ async function main() {
         let loadedPromise = loadedModulesAsync[path];
         if(!loadedPromise)
             loadedPromise = loadedModulesAsync[path] = async function() {
-                let response = await fetch(path, { method: 'POST' });      // POST to make sure we get static files
-                if(response.status < 200 || response.status >= 300)
-                    throw new Error('fetch of ' + path + ' failed with status code ' + response.status);
-
-                return loadModule(path, await response.text());
+                let response = await serverFetchAsync(path);
+                return loadModule(path, response);
             }();
         return await loadedPromise;
     }
@@ -94,29 +194,23 @@ async function main() {
             loadedPromise = loadedComponents[name] = async function() {
                 let elems = [
                     requireAbsoluteAsync('/components/' + name + '/code'),
-                    fetch('/components/' + name + '/template.html', { method: 'POST' })
+                    serverFetchAsync('/components/' + name + '/template.html')
                 ];
                 if(!loadedComponentStyles[name])
-                    elems.push(fetch('/components/' + name + '/style.css', { method: 'POST' }));
+                    elems.push(serverFetchAsync('/components/' + name + '/style.css', {fileNotFoundOK: true}));
                 elems = await Promise.all(elems);
 
                 let code = elems[0];
                 if(!code.component.template) {
                     let template = elems[1];
-                    if(template.status < 200 || template.status >= 300)
-                        throw new Error('fetch of /components/' + name + '/template.html failed with status code ' + template.status);
-
-                    code.component.template = '<div id="' + name + '">' + (await template.text()) + '</div>';
+                    code.component.template = '<div id="' + name + '">' + template + '</div>';
                 }
 
                 if(!loadedComponentStyles[name]) {
                     let style = elems[2];
-                    if(style.status != 404) {
-                        if(style.status < 200 || style.status >= 300)
-                            throw new Error('fetch of /components/' + name + '/template.html failed with status code ' + template.status);
-
+                    if(style) {
                         let node = document.createElement('style');
-                        node.innerHTML = await style.text();
+                        node.innerHTML = style;
                         document.head.appendChild(node);
                     }
                 }
@@ -128,7 +222,7 @@ async function main() {
 
     function panic(err) {
         document.getElementById('overlayPanic').style.display = '';
-        throw err;
+        throw new Error(err);
     }
 
     try {

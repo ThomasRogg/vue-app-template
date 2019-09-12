@@ -1,7 +1,7 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
 http auf https => redirect mit http
-
+Client side correct file name
 Doku 
 Load js after slow Image?
 .component raus

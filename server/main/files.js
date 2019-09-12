@@ -34,6 +34,8 @@ exports.init = async function() {
  * options.javaScript       handle transpilation and strict mode
  * options.isMainCode       adds coreJS bundle and regenerator runtime if transpiling is active
  * options.streamAllowed    allows to return a stream instead of the data if there is no need to load the file
+ * 
+ * Cache key is filePath x options.compression, so javaScript and isMainCode is expected to be the same always
  */
 
 exports.get = async function get(filePath, options) {
@@ -65,7 +67,7 @@ exports.get = async function get(filePath, options) {
             });
         }
 
-        cachePromise = cache[key] = async function() {
+        async function handleLoad() {
             let data;
             if(options.javaScript) {
                 data = await fs.promises.readFile(filePath, 'utf8');
@@ -108,7 +110,11 @@ exports.get = async function get(filePath, options) {
                 data = await deflate(data);
 
             return {data};
-        }();
+        }
+
+        if(!doCache)
+            return await handleLoad();
+        cachePromise = cache[key] = handleLoad();
     }
 
     return await cachePromise;
