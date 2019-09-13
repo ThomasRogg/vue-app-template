@@ -49,11 +49,11 @@ async function main() {
                     }
                     return;
                 } else if(request.status) {
-                    panic('syncronous fetch of ' + url + ' returned status code ' + request.status);
-                    return;
+                    document.getElementById('overlayPanic').style.display = '';
+                    throw new Error('syncronous fetch of ' + url + ' returned status code ' + request.status);
                 }
-            } catch(e) {
-                console.error(e);
+            } catch(err) {
+                console.error(err);
             }
             status(false);
         }
@@ -89,11 +89,11 @@ async function main() {
                             status(true);
                             resolve();
                         } else {
-                            console.error(url + ' not found');
+                            console.error(new Error(url + ' not found'));
                             document.getElementById('overlayFileNotFound').style.display = '';
                         }
                     } else if(request.status)
-                        panic('asyncronous fetch of ' + url + ' returned status code ' + request.status);
+                        panic(new Error('asyncronous fetch of ' + url + ' returned status code ' + request.status));
                     else {
                         status(false);
                         setTimeout(loop1, 1000);
@@ -144,10 +144,11 @@ async function main() {
     }
 
     function loadModule(path, code) {
-        let pos = path.lastIndexOf('/');
         code = new Function('exports', 'require', 'module', '__filename', '__dirname', code);
 
         let module = {exports: {}};
+        let pos = path.lastIndexOf('/');
+
         code(module.exports, (module) => {
             return requireAbsoluteSync(module[0] == '.' ? pathJoin(path, module) : module);
         }, module, path.substr(pos + 1), pos == -1 ? '' : path.substr(0, pos));
@@ -201,9 +202,9 @@ async function main() {
                 elems = await Promise.all(elems);
 
                 let code = elems[0];
-                if(!code.component.template) {
+                if(!code.template) {
                     let template = elems[1];
-                    code.component.template = '<div id="' + name + '">' + template + '</div>';
+                    code.template = '<div id="' + name + '">' + template + '</div>';
                 }
 
                 if(!cssLoaded) {
@@ -215,14 +216,14 @@ async function main() {
                     }
                 }
 
-                return code.component;
+                return code;
             }();
         return await loadedPromise;
     }
 
     function panic(err) {
         document.getElementById('overlayPanic').style.display = '';
-        throw new Error(err);
+        return new Promise(() => {});
     }
 
     try {
@@ -258,7 +259,7 @@ async function main() {
         // Hydrate from server
         app.$mount('#app', true);
     } catch(err) {
-        panic(err);
+        await panic(err);
     }
 }
 main();

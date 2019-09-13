@@ -1,6 +1,6 @@
 "use strict";
 
-exports.component = {
+module.exports = {
     data: {
         counter: 0
     },
@@ -10,9 +10,3 @@ exports.component = {
         }, 10);
     }
 };
-
-class shit {
-    constructor() {
-        
-    }
-}

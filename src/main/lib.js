@@ -16,7 +16,8 @@ exports.api = exports.IS_SERVER_SIDE ? async function api(module, json) {
 };
 
 exports.panic = exports.IS_SERVER_SIDE ? function panic(err) {
-    throw err;
+    console.error(err);
+    return new Promise(() => {});
 } : window._libExports.panic;
 
 if(!exports.IS_SERVER_SIDE)

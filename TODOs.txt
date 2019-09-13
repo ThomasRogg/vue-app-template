@@ -1,10 +1,8 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
 http auf https => redirect mit http
-Client side correct file name
 Doku 
 Load js after slow Image?
-.component raus
 CSS conflict info
 
 reboot CSS      https://getbootstrap.com/docs/4.3/content/reboot/
@@ -59,4 +57,8 @@ api put
 api websocket
 http/2
 
+
+
+LATER
 different languages
+Client side correct file name

@@ -20,16 +20,14 @@ exports.init = async function init() {
             continue;
 
         let code = require(componentsPath + '/' + paths[i] + '/code');
-        if(!code.component)
-            throw new Error('component ' + paths[i] + ' does not export the component object');
-        if(!code.component.template)
-            code.component.template = '<div id="' + paths[i] + '">' + await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8') + '</div>';
+        if(!code.template)
+            code.template = '<div id="' + paths[i] + '">' + await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8') + '</div>';
 
         if(paths[i] == 'app')
-            appComponent = code.component;
+            appComponent = code;
         else {
             components.push(paths[i]);
-            Vue.component(paths[i], code.component);
+            Vue.component(paths[i], code);
         }
     }
 
