@@ -77,7 +77,7 @@ exports.handleRequest = function handleRequest(req, res) {
             }
         }
         html = html.replace('[[styles]]', styles);
-        html = html.replace('[[loaded_component_styles]]', JSON.stringify(componentNames));
+        html = html.replace('[[loaded_components_map]]', JSON.stringify(componentNames));
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.end(html);

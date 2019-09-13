@@ -8,7 +8,7 @@ exports.STRICT_MODE             = !exports.PRODUCTION;
 exports.ENABLE_TRANSPILATION    = exports.PRODUCTION;
 exports.ENABLE_COMPRESSION      = true;
 
-exports.TRANSPILATION_TARGETS   = ['IE 8, last 2 versions'];
+exports.TRANSPILATION_TARGETS   = ['IE 10, last 2 versions'];
 exports.TRANSPILATION_MINIFY    = true;
 
 exports.ENABLE_SSR              = !exports.PRODUCTION;

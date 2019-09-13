@@ -8,8 +8,8 @@ async function main() {
     const FETCH_TIMEOUT_MS = 30000;
 
     let loadedModules = {}, loadedModulesAsync = {}, loadedComponents = {};
-    let connectionErrorCount = 0;
 
+    let connectionErrorCount = 0;
     function connectionError(inc) {
         if(inc) {
             if(!connectionErrorCount++)
@@ -188,7 +188,7 @@ async function main() {
         return await loadedPromise;
     }
 
-    async function loadComponent(name) {
+    async function loadComponent(name, cssLoaded) {
         let loadedPromise = loadedComponents[name];
         if(!loadedPromise)
             loadedPromise = loadedComponents[name] = async function() {
@@ -196,7 +196,7 @@ async function main() {
                     requireAbsoluteAsync('/components/' + name + '/code'),
                     serverFetchAsync('/components/' + name + '/template.html')
                 ];
-                if(!loadedComponentStyles[name])
+                if(!cssLoaded)
                     elems.push(serverFetchAsync('/components/' + name + '/style.css', {fileNotFoundOK: true}));
                 elems = await Promise.all(elems);
 
@@ -206,7 +206,7 @@ async function main() {
                     code.component.template = '<div id="' + name + '">' + template + '</div>';
                 }
 
-                if(!loadedComponentStyles[name]) {
+                if(!cssLoaded) {
                     let style = elems[2];
                     if(style) {
                         let node = document.createElement('style');
@@ -227,27 +227,34 @@ async function main() {
 
     try {
         // Preload all libraries in parallel
+        window._libExports = {
+            requireAbsoluteSync,
+            panic
+        }
+
         let libsPromises = [requireAbsoluteAsync('/main/lib')];
         for(let i = 0; i < libs.length; i++)
             libsPromises.push(requireAbsoluteAsync(libs[i]));
         libsPromises = await Promise.all(libsPromises);
 
-        // Setup lib
-        let lib = libsPromises[0];
-
-        lib.requireAsync = requireAbsoluteSync;
-        lib.panic = panic;
-
-        // Register all components other than app for lazy load
+        // Register components. The ones we are already using from SSR are loaded directly,
+        // the other ones are lazy loaded
         const Vue = requireAbsoluteSync('vue');
 
+        let componentPromises = [loadComponent('app', true)];
         for(let i = 0; i < components.length; i++) {
-            Vue.component(components[i], (resolve, reject) => {
-                loadComponent(components[i]).then(resolve).catch(reject);
-            });
+            if(loadedComponentsMap[components[i]])
+                componentPromises.push(loadComponent(components[i], true))
+            else
+                Vue.component(components[i], loadComponent(components[i]));
+        }
+        componentPromises = await Promise.all(componentPromises);
+        for(let i = 0, j = 1; i < components.length; i++) {
+            if(loadedComponentsMap[components[i]])
+                Vue.component(components[i], componentPromises[j++]);
         }
 
-        let app = new Vue(await loadComponent('app'));
+        let app = new Vue(componentPromises[0]);
         // Hydrate from server
         app.$mount('#app', true);
     } catch(err) {
