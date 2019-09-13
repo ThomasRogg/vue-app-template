@@ -1,6 +1,8 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
-http auf https => redirect mit http
+redirect http => https
+handle http on https port
+
 Doku 
 Load js after slow Image?
 CSS conflict info
@@ -10,7 +12,6 @@ box stling CSS
 native fonts
 better error messages
 log for accesses
-files.get based on promises
 mangle does not change global vars in module
 watch files and remove cache
 ssr optional

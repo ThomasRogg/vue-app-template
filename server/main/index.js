@@ -1,6 +1,8 @@
 "use strict";
 
+const fs        = require('fs');
 const http      = require('http');
+const https     = require('https');
 const path      = require('path');
 const url       = require('url');
 
@@ -154,11 +156,32 @@ async function main() {
     try {
         console.log("Loading...");
 
+        let sslPromises;
+        if(config.HTTPS_PORT) {
+            sslPromises = [
+                fs.promises.readFile(config.HTTPS_SSL_KEY),
+                fs.promises.readFile(config.HTTPS_SSL_CERT),
+                
+            ];
+            if(config.HTTPS_SSL_CA)
+                sslPromises.push(fs.promises.readFile(config.HTTPS_SSL_CA));
+            sslPromises = await Promise.all(sslPromises);
+        }
         await files.init();
         await ssr.init();
 
-        let httpServer = http.createServer(handleRequest);
-        httpServer.listen(8000);
+        if(config.HTTP_PORT) {
+            let server = http.createServer(handleRequest);
+            server.listen(config.HTTP_PORT);
+        }
+        if(config.HTTPS_PORT) {
+            let server = https.createServer({
+                key: sslPromises[0],
+                cert: sslPromises[1],
+                ca: sslPromises[2]
+            }, handleRequest);
+            server.listen(config.HTTPS_PORT);
+        }
 
         console.log("Ready.");
     } catch(err) {

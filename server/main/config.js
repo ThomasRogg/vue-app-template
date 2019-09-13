@@ -4,6 +4,14 @@ const path = require('path');
 
 exports.PRODUCTION              = false;
 
+exports.HTTP_PORT               = exports.PRODUCTION ? 80 : 8000;
+exports.HTTPS_PORT              = exports.PRODUCTION ? 443 : 8443;
+
+exports.HTTPS_REDIRECT_HTTP     = exports.PRODUCTION ? true : false;
+exports.HTTPS_SSL_KEY           = path.join(__dirname, '../../config/ssl.key');
+exports.HTTPS_SSL_CERT          = path.join(__dirname, '../../config/ssl.crt');
+//exports.HTTPS_SSL_CA            = path.join(__dirname, '../../config/ssl_ca.cert');
+
 exports.STRICT_MODE             = !exports.PRODUCTION;
 exports.ENABLE_TRANSPILATION    = exports.PRODUCTION;
 exports.ENABLE_COMPRESSION      = true;
