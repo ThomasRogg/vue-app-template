@@ -74,7 +74,7 @@ async function handleResponse(req, res, body) {
         let pos = urlPath.lastIndexOf('.');
         if(pos != -1)
             ext = config.FILE_EXTENSIONS[urlPath.substr(pos + 1).toLowerCase()];
-        let javaScript = ext.javaScript;
+        let javaScript = ext && ext.javaScript;
 
         let filePath;
         if(urlPath.substr(0, '/lib/'.length) == '/lib/' && javaScript) {
@@ -152,6 +152,18 @@ function handleRequest(req, res) {
     });
 }
 
+function redirectRequest(req, res) {
+    let host = req.headers['host'] || req.socket.localAddress;
+    if(host.indexOf(':') >= 0)
+        host = '[' + host + ']';
+    let port = config.HTTPS_PORT == 443 ? '' : ':' + config.HTTPS_PORT;
+
+    res.writeHead(301, {
+        'Location': 'https://' + host + port + req.url
+    });
+    res.end();
+}
+
 async function main() {
     try {
         console.log("Loading...");
@@ -171,7 +183,7 @@ async function main() {
         await ssr.init();
 
         if(config.HTTP_PORT) {
-            let server = http.createServer(handleRequest);
+            let server = http.createServer(config.HTTP_REDIRECT_HTTPS && config.HTTPS_PORT ? redirectRequest : handleRequest);
             server.listen(config.HTTP_PORT);
         }
         if(config.HTTPS_PORT) {
