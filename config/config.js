@@ -8,9 +8,9 @@ exports.HTTP_PORT               = exports.PRODUCTION ? 80 : 8000;
 exports.HTTPS_PORT              = exports.PRODUCTION ? 443 : 8443;
 
 exports.HTTPS_REDIRECT_HTTP     = exports.PRODUCTION ? true : false;
-exports.HTTPS_SSL_KEY           = path.join(__dirname, '../../config/ssl.key');
-exports.HTTPS_SSL_CERT          = path.join(__dirname, '../../config/ssl.crt');
-//exports.HTTPS_SSL_CA            = path.join(__dirname, '../../config/ssl_ca.cert');
+exports.HTTPS_SSL_KEY           = path.join(__dirname, 'ssl.key');
+exports.HTTPS_SSL_CERT          = path.join(__dirname, 'ssl.crt');
+//exports.HTTPS_SSL_CA            = path.join(__dirname, 'ssl_ca.cert');
 
 exports.ENABLE_SSR              = true;
 exports.ENABLE_TRANSPILATION    = exports.PRODUCTION;
@@ -37,8 +37,8 @@ exports.FILE_EXTENSIONS = {
 
 let suffix = exports.PRODUCTION ? '.min.js' : '.js';
 exports.LIBS = {
-    'vue': path.join(__dirname, '../../node_modules/vue/dist/vue' + suffix),
-    'vuex': path.join(__dirname, '../../node_modules/vuex/dist/vuex' + suffix)
+    'vue': path.join(__dirname, '../node_modules/vue/dist/vue' + suffix),
+    'vuex': path.join(__dirname, '../node_modules/vuex/dist/vuex' + suffix)
 };
 
-exports.SRC_PATH = path.join(__dirname, '../../src');
+exports.SRC_PATH = path.join(__dirname, '../src');

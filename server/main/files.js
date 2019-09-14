@@ -3,7 +3,7 @@
 const fs        = require('fs');
 const path      = require('path');
 
-const config    = require('./config');
+const config    = require('../../config/config');
 
 let zlib, gzip, deflate;
 if(config.ENABLE_COMPRESSION) {

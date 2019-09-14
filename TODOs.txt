@@ -1,5 +1,6 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
+
 loadedCompomentsMap has app, components not
 when load files etc., even with ssr no cache problem
 allow module.export as promise
@@ -12,6 +13,9 @@ CSS conflict info
 
 menu example
 server side calculator example
+
+vue-router!
+vuex on server side
 
 reboot CSS      https://getbootstrap.com/docs/4.3/content/reboot/
 box stling CSS

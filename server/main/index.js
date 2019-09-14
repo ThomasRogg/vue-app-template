@@ -6,7 +6,8 @@ const https     = require('https');
 const path      = require('path');
 const url       = require('url');
 
-const config    = require('./config');
+const config    = require('../../config/config');
+
 const files     = require('./files');
 const ssr       = require('./ssr');
 
