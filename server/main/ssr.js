@@ -3,10 +3,15 @@
 const fs            = require('fs');
 const path          = require('path');
 
-const Vue           = require('vue');
-const vueRenderer   = require('vue-server-renderer');
-
 const config        = require('./config');
+
+let Vue, vueRenderer;
+if(config.ENABLE_SSR) {
+    Vue = require('vue');
+    vueRenderer = require('vue-server-renderer');
+}
+
+let template;
 
 let renderer, components, appComponent;
 
@@ -19,35 +24,49 @@ exports.init = async function init() {
         if(paths[i][0] == '.')
             continue;
 
-        let code;
-        try {
-            code = require(componentsPath + '/' + paths[i] + '/code');
-        } catch(e) {
-            if(e.code != 'MODULE_NOT_FOUND')
-                throw e;
-
-            code = {};
-        }
-        if(!code.template)
-            code.template = '<div id="' + paths[i] + '">' + await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8') + '</div>';
-
-        if(paths[i] == 'app')
-            appComponent = code;
-        else {
+        if(paths[i] != 'app')
             components.push(paths[i]);
-            Vue.component(paths[i], code);
+        if(config.ENABLE_SSR) {
+            let code;
+
+            try {
+                code = require(componentsPath + '/' + paths[i] + '/code');
+            } catch(e) {
+                if(e.code != 'MODULE_NOT_FOUND')
+                    throw e;
+
+                code = {};
+            }
+            if(typeof code == 'function')
+                code = await code();
+            if(!code.template)
+                code.template = '<div id="' + paths[i] + '">' + await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8') + '</div>';
+
+            if(paths[i] == 'app')
+                appComponent = code;
+            else {
+                components.push(paths[i]);
+                Vue.component(paths[i], code);
+            }
         }
     }
 
-    let template = await fs.promises.readFile(path.join(config.SRC_PATH, 'main/index.html'), 'utf8');
-    template = template.replace('[[libs]]', JSON.stringify(Object.keys(config.LIBS)));
-    template = template.replace('[[components]]', JSON.stringify(components));
-    renderer = vueRenderer.createRenderer({template});
+    let html = await fs.promises.readFile(path.join(config.SRC_PATH, 'main/index.html'), 'utf8');
+    html = html.replace('[[libs]]', JSON.stringify(Object.keys(config.LIBS)));
+    html = html.replace('[[components]]', JSON.stringify(components));
+    if(config.ENABLE_SSR)
+        renderer = vueRenderer.createRenderer({template: html});
+    else {
+        let styles = await fs.promises.readFile(path.join(config.SRC_PATH, 'main/style.css'), 'utf8');
+        html = html.replace('[[styles]]', styles);
+        html = html.replace('[[loaded_components_map]]', 'null');
+
+        template = html.replace('<!--vue-ssr-outlet-->', '<div id="app"></div>');
+    }
 }
 
-exports.handleRequest = function handleRequest(req, res) {
+exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
     let app = new Vue(appComponent);
-
     renderer.renderToString(app, async (err, html) => {
         if(err) {
             console.error(err);
@@ -88,4 +107,7 @@ exports.handleRequest = function handleRequest(req, res) {
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.end(html);
     });
+} : async function handleRequest(req, res) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(template);
 };

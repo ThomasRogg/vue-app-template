@@ -7,11 +7,15 @@ exports.requireAsync = exports.IS_SERVER_SIDE ? async function requireSync(modul
     return require(module);
 } : window._libExports.requireAbsoluteSync;
 
-exports.fetch = 0;  // TODO
+exports.importCSS = 0;
 
-exports.api = exports.IS_SERVER_SIDE ? async function api(module, json) {
+exports.importJS = 0;
+
+exports.fetch = 0;
+
+exports.call = exports.IS_SERVER_SIDE ? async function call(module, json) {
     // We can call api's method directly
-} : async function api(module, json) {
+} : async function call(module, json) {
     // We do a fetch
 };
 

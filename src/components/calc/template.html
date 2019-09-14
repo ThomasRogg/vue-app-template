@@ -1,0 +1,31 @@
+<table>
+    <tbody>
+    <tr>
+        <td colspan="4"><input readonly v-bind:value="val"></td>
+    </tr>
+    <tr>
+        <td><button v-on:click="num(7)">7</button></td>
+        <td><button v-on:click="num(8)">8</button></td>
+        <td><button v-on:click="num(9)">9</button></td>
+        <td><button v-on:click="op('div')">/</button></td>
+    </tr>
+    <tr>
+        <td><button v-on:click="num(4)">4</button></td>
+        <td><button v-on:click="num(5)">5</button></td>
+        <td><button v-on:click="num(6)">6</button></td>
+        <td><button v-on:click="op('mult')">*</button></td>
+    </tr>
+    <tr>
+        <td><button v-on:click="num(1)">1</button></td>
+        <td><button v-on:click="num(2)">2</button></td>
+        <td><button v-on:click="num(3)">3</button></td>
+        <td><button v-on:click="op('sub')">-</button></td>
+    </tr>
+    <tr>
+        <td><button v-on:click="dot()">.</button></td>
+        <td><button v-on:click="num(0)">0</button></td>
+        <td><button v-on:click="op()">=</button></td>
+        <td><button v-on:click="op('add')">+</button></td>
+    </tr>
+</tbody>
+</table>

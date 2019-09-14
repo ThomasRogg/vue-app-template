@@ -12,18 +12,16 @@ exports.HTTPS_SSL_KEY           = path.join(__dirname, '../../config/ssl.key');
 exports.HTTPS_SSL_CERT          = path.join(__dirname, '../../config/ssl.crt');
 //exports.HTTPS_SSL_CA            = path.join(__dirname, '../../config/ssl_ca.cert');
 
-exports.STRICT_MODE             = !exports.PRODUCTION;
+exports.ENABLE_SSR              = true;
 exports.ENABLE_TRANSPILATION    = exports.PRODUCTION;
 exports.ENABLE_COMPRESSION      = true;
 
+exports.STRICT_MODE             = !exports.PRODUCTION;
 exports.TRANSPILATION_TARGETS   = ['IE 10, last 2 versions'];
 exports.TRANSPILATION_MINIFY    = true;
 
-exports.ENABLE_SSR              = !exports.PRODUCTION;
-exports.WATCH_SRC_DIRECTORY     = !exports.PRODUCTION;
-
 exports.MAX_BODY_SIZE           = 10 * 1024 * 1024;
-exports.CACHE_MAX_FILE_SIZE     = 1024 * 1024;
+exports.CACHE_MAX_FILE_SIZE     = exports.PRODUCTION ? 1024 * 1024 : 0;
 
 exports.FILE_EXTENSIONS = {
     'html': {mime: 'text/html; charset=utf-8', compress: true},

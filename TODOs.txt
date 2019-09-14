@@ -1,6 +1,11 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
+loadedCompomentsMap has app, components not
+when load files etc., even with ssr no cache problem
+allow module.export as promise
 api call
+
+404 errors in console?
 
 Load js after slow Image?
 CSS conflict info

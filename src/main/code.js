@@ -202,8 +202,14 @@ async function main() {
                 elems = await Promise.all(elems);
 
                 let code = elems[0];
+                if(typeof code == 'function')
+                    code = await code();
+
                 if(!code.template) {
-                    let template = elems[1] || '';
+                    if(elems[1] === undefined)
+                        throw new Error('/components/' + name + '/template.html not found');
+
+                    let template = elems[1];
                     code.template = '<div id="' + name + '">' + template + '</div>';
                 }
 
@@ -244,20 +250,24 @@ async function main() {
 
         let componentPromises = [loadComponent('app', true)];
         for(let i = 0; i < components.length; i++) {
-            if(loadedComponentsMap[components[i]])
+            if(loadedComponentsMap && loadedComponentsMap[components[i]])
                 componentPromises.push(loadComponent(components[i], true))
-            else
-                Vue.component(components[i], loadComponent(components[i]));
+            else {
+                // Directly giving Vue.component the loadComponent promise does not work
+                Vue.component(components[i], (resolve, reject) => {
+                    loadComponent(components[i]).then(resolve).catch(reject);
+                });
+            }
         }
         componentPromises = await Promise.all(componentPromises);
         for(let i = 0, j = 1; i < components.length; i++) {
-            if(loadedComponentsMap[components[i]])
+            if(loadedComponentsMap && loadedComponentsMap[components[i]])
                 Vue.component(components[i], componentPromises[j++]);
         }
 
         let app = new Vue(componentPromises[0]);
         // Hydrate from server
-        app.$mount('#app', true);
+        app.$mount('#app', loadedComponentsMap ? true : false);
     } catch(err) {
         await panic(err);
     }
