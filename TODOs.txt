@@ -1,11 +1,12 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
-redirect http => https
-handle http on https port
+api call
 
-Doku 
 Load js after slow Image?
 CSS conflict info
+
+menu example
+server side calculator example
 
 reboot CSS      https://getbootstrap.com/docs/4.3/content/reboot/
 box stling CSS
@@ -21,11 +22,13 @@ should be able to run without javascript on client
 javascript ausschaltbar => wird bei IE gemacht
 robots.txt
 favicon.ico
-api call.. auch mit websockets nativ
+api call auch mit websockets nativ
 websockets auto reload if watch
 load all components at ocne which are needed on start
 http2 over browserslist
 
+favicon
+SRC_PATH raus
 src change => reload mod
 get rid of caching
 component must be able to be a async function
@@ -61,5 +64,6 @@ http/2
 
 
 LATER
+Doku
 different languages
 Client side correct file name

@@ -19,7 +19,15 @@ exports.init = async function init() {
         if(paths[i][0] == '.')
             continue;
 
-        let code = require(componentsPath + '/' + paths[i] + '/code');
+        let code;
+        try {
+            code = require(componentsPath + '/' + paths[i] + '/code');
+        } catch(e) {
+            if(e.code != 'MODULE_NOT_FOUND')
+                throw e;
+
+            code = {};
+        }
         if(!code.template)
             code.template = '<div id="' + paths[i] + '">' + await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8') + '</div>';
 

@@ -157,7 +157,7 @@ async function main() {
         return module.exports;
     }
 
-    function requireAbsoluteSync(origPath) {
+    function requireAbsoluteSync(origPath, options) {
         let path;
         if(origPath[0] == '/')
             path = origPath + '.js';
@@ -168,11 +168,11 @@ async function main() {
 
         console.warn('Fetching ' + path + ' in blocking mode as not loaded yet. Please use await require(\'[...]/main/lib\').requireAsync(\'' + origPath + '\') instead of require');
 
-        let request = serverFetchSync(path);
-        return loadModule(path, request);
+        let response = serverFetchSync(path, options);
+        return response ? loadModule(path, response) : {};
     }
 
-    async function requireAbsoluteAsync(path) {
+    async function requireAbsoluteAsync(path, options) {
         if(path[0] == '/')
             path += '.js';
         else
@@ -183,8 +183,8 @@ async function main() {
         let loadedPromise = loadedModulesAsync[path];
         if(!loadedPromise)
             loadedPromise = loadedModulesAsync[path] = async function() {
-                let response = await serverFetchAsync(path);
-                return loadModule(path, response);
+                let response = await serverFetchAsync(path, options);
+                return response ? loadModule(path, response) : {};
             }();
         return await loadedPromise;
     }
@@ -194,8 +194,8 @@ async function main() {
         if(!loadedPromise)
             loadedPromise = loadedComponents[name] = async function() {
                 let elems = [
-                    requireAbsoluteAsync('/components/' + name + '/code'),
-                    serverFetchAsync('/components/' + name + '/template.html')
+                    requireAbsoluteAsync('/components/' + name + '/code', {fileNotFoundOK: true}),
+                    serverFetchAsync('/components/' + name + '/template.html', {fileNotFoundOK: true})
                 ];
                 if(!cssLoaded)
                     elems.push(serverFetchAsync('/components/' + name + '/style.css', {fileNotFoundOK: true}));
@@ -203,7 +203,7 @@ async function main() {
 
                 let code = elems[0];
                 if(!code.template) {
-                    let template = elems[1];
+                    let template = elems[1] || '';
                     code.template = '<div id="' + name + '">' + template + '</div>';
                 }
 
