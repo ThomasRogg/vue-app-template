@@ -1,6 +1,6 @@
 "use strict";
 
-exports.IS_SERVER_SIDE = typeof process === 'object';
+exports.IS_SERVER_SIDE = typeof process == 'object';
 
 exports.requireAsync = exports.IS_SERVER_SIDE ? async function requireSync(module) {
     // Do not do asyncronly on server as it is not needed... All modules will be loaded after a while anyhow

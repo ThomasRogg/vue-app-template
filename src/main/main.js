@@ -250,6 +250,9 @@ async function main() {
 
         let componentPromises = [loadComponent('app', true)];
         for(let i = 0; i < components.length; i++) {
+            if(components[i] == 'app')
+                continue;
+
             if(loadedComponentsMap && loadedComponentsMap[components[i]])
                 componentPromises.push(loadComponent(components[i], true))
             else {
@@ -261,6 +264,9 @@ async function main() {
         }
         componentPromises = await Promise.all(componentPromises);
         for(let i = 0, j = 1; i < components.length; i++) {
+            if(components[i] == 'app')
+                continue;
+
             if(loadedComponentsMap && loadedComponentsMap[components[i]])
                 Vue.component(components[i], componentPromises[j++]);
         }

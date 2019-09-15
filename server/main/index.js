@@ -97,7 +97,7 @@ async function handleResponse(req, res, body) {
         let file = await files.get(filePath, {
             compression,
             javaScript,
-            isMainCode: urlPath == '/main/code.js',
+            isMainCode: urlPath == '/main/main.js',
             streamAllowed: true
         });
         if(!ext) {

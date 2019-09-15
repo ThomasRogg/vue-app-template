@@ -1,10 +1,6 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
-
-loadedCompomentsMap has app, components not
 when load files etc., even with ssr no cache problem
-allow module.export as promise
-api call
 
 404 errors in console?
 
@@ -29,50 +25,42 @@ remove SRC_PATH
 Preload all libraries in parallel => panic usw is not set outside o loop :-/
 should be able to run without javascript on client
 javascript ausschaltbar => wird bei IE gemacht
-robots.txt
 favicon.ico
 api call auch mit websockets nativ
 websockets auto reload if watch
 load all components at ocne which are needed on start
 http2 over browserslist
 
-favicon
 SRC_PATH raus
 src change => reload mod
 get rid of caching
 component must be able to be a async function
 max post size
 title and meta tags
-global server store (for users)
-log
 error pages for everything
 production/debug mode better
 https in config
-loading thru store
-license
 comments
 file caching
 client side reload component
 
-auto sitemap
 
 auto delete logs
-log content including access
 
-MANY comments
-in docs: compression instead of minification
-https://www.freecodecamp.org/news/you-might-not-need-to-transpile-your-javascript-4d5e0a438ca/
-youmightnotneedjquery
 
 routes
-local storage
-api put
-api websocket
-http/2
-
+log content including access
+auto sitemap
+MANY comments
 
 
 LATER
+api put
+api websocket
+vuex
+global server store (for users)
+local storage
+http/2
 Doku
 different languages
 Client side correct file name
