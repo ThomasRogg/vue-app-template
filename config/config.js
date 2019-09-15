@@ -43,6 +43,7 @@ exports.FILE_EXTENSIONS = {
 let suffix = exports.PRODUCTION ? '.min.js' : '.js';
 exports.REDIRECTS = {
     '/lib/vue.js': path.join(__dirname, '../node_modules/vue/dist/vue' + suffix),
+    '/lib/vue-router.js': path.join(__dirname, '../node_modules/vue-router/dist/vue-router' + suffix),
     '/lib/vuex.js': path.join(__dirname, '../node_modules/vuex/dist/vuex' + suffix)
 };
 
@@ -57,5 +58,6 @@ exports.SCRIPTS = [
 
 exports.PRELOAD_MODULES = [
     '/lib/vue',
+    '/lib/vue-router',
     '/lib/vuex'
 ];

@@ -5,18 +5,8 @@ auto rotate and remove
 logfile buffer.concat
 logfile entry on exit
 
-
-
-
-
 CSS conflict info
-
-menu example
-server side calculator example
-
-auto remove old logs
 vue-router!
-vuex on server side
 
 mangle does not change global vars in module
 should be able to run without javascript on client
@@ -24,24 +14,30 @@ javascript ausschaltbar => wird bei IE gemacht
 favicon.ico
 http2 over browserslist
 
-max post size
 title and meta tags
 error pages for everything
 production/debug mode better
-comments
 routes
-log content including access
+
 auto sitemap
-MANY comments
+api put
+api websocket
+
+
+menu example
+calc and chat
+
+
+
 
 
 LATER
-api put
-api websocket
 vuex
 global server store (for users)
+session
 local storage
 http/2
+MANY comments
 Doku
 different languages
 Client side correct file name
