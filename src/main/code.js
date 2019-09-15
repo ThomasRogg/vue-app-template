@@ -35,19 +35,16 @@ async function main() {
             try {
                 let request = new XMLHttpRequest();
                 request.open('POST', url, false);
+                if(options && options.fileNotFoundOK)
+                    request.setRequestHeader('X-FileNotFound-OK', 'true')
                 request.send(null);
 
-                if(request.status >= 200 && request.status < 300) {
+                if((request.status == 404 || request.getResponseHeader('X-FileNotFound')) && !(options && options.fileNotFoundOK)) {
+                    document.getElementById('overlayFileNotFound').style.display = '';
+                    throw new Error(url + ' not found');
+                } else if(request.status >= 200 && request.status < 300) {
                     status(true);
-                    return request.responseText;
-                } else if(request.status == 404) {
-                    if(options && options.fileNotFoundOK)
-                        status(true);
-                    else {
-                        document.getElementById('overlayFileNotFound').style.display = '';
-                        throw new Error(url + ' not found');
-                    }
-                    return;
+                    return request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText;
                 } else if(request.status) {
                     document.getElementById('overlayPanic').style.display = '';
                     throw new Error('syncronous fetch of ' + url + ' returned status code ' + request.status);
@@ -74,24 +71,19 @@ async function main() {
                 let done = false;
 
                 let request = new XMLHttpRequest();
-                request.timeout = FETCH_TIMEOUT_MS;
+                request.open('POST', url, true);
 
                 request.onload = () => {
                     if(done)
                         return;
                     done = true;
 
-                    if(request.status >= 200 && request.status < 300) {
+                    if((request.status == 404 || request.getResponseHeader('X-FileNotFound')) && !(options && options.fileNotFoundOK)) {
+                        console.error(new Error(url + ' not found'));
+                        document.getElementById('overlayFileNotFound').style.display = '';
+                    } else if(request.status >= 200 && request.status < 300) {
                         status(true);
-                        resolve(request.responseText);
-                    } else if(request.status == 404) {
-                        if(options && options.fileNotFoundOK) {
-                            status(true);
-                            resolve();
-                        } else {
-                            console.error(new Error(url + ' not found'));
-                            document.getElementById('overlayFileNotFound').style.display = '';
-                        }
+                        resolve(request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText);
                     } else if(request.status)
                         panic(new Error('asyncronous fetch of ' + url + ' returned status code ' + request.status));
                     else {
@@ -116,7 +108,9 @@ async function main() {
                     loop1();
                 };
 
-                request.open('POST', url, true);
+                request.timeout = FETCH_TIMEOUT_MS;
+                if(options && options.fileNotFoundOK)
+                    request.setRequestHeader('X-FileNotFoundOK', 'true')
                 request.send();
             }
             loop1();
@@ -248,7 +242,7 @@ async function main() {
         // the other ones are lazy loaded
         const Vue = requireAbsoluteSync('vue');
 
-        let componentPromises = [loadComponent('app', true)];
+        let componentPromises = [loadComponent('app', loadedComponentsMap ? true : false)];
         for(let i = 0; i < components.length; i++) {
             if(components[i] == 'app')
                 continue;

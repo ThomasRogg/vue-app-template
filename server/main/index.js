@@ -15,6 +15,8 @@ let zlib;
 if(config.ENABLE_COMPRESSION)
     zlib = require('zlib');
 
+let srcPath = path.join(__dirname, '../../src');
+
 /*
  * handleRequest
  *
@@ -39,6 +41,11 @@ async function handleResponse(req, res, body) {
             compression = 'deflate';
     }
 
+    // Disable all caches to allow us to change content any time.
+    // We implement a single page application, so things are only loaded once anyways.
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Expires', 'Sat, 26 Jul 1997 05:00:00 GMT');
+
     function fileNotFound() {
         if(req.method == 'GET' && !ext) {
             // File is not a static file... We give control to server side rendering, but compress here
@@ -57,7 +64,10 @@ async function handleResponse(req, res, body) {
             }
             ssr.handleRequest(req, res);
         } else {
-            res.statusCode = 404;
+            if(req.headers['x-filenotfoundok'])
+                res.writeHead(200, {'X-FileNotFound': 'true'});
+            else
+                res.statusCode = 404;
             res.end();
             return;
         }
@@ -78,14 +88,14 @@ async function handleResponse(req, res, body) {
         let javaScript = ext && ext.javaScript;
 
         let filePath;
-        if(urlPath.substr(0, '/lib/'.length) == '/lib/' && javaScript) {
-            filePath = config.LIBS[urlPath.substring('/lib/'.length, pos)];
+        if(config.REDIRECTS[urlPath]) {
+            filePath = config.REDIRECTS[urlPath];
             javaScript = false;
         }
         if(!filePath) {
-            filePath = path.join(config.SRC_PATH, urlPath);
+            filePath = path.join(srcPath, urlPath);
             // Do not allow access outside of source directory
-            if(filePath.substr(0, config.SRC_PATH.length) != config.SRC_PATH) {
+            if(filePath.substr(0, srcPath.length) != srcPath) {
                 res.statusCode = 403;
                 res.end();
                 return;
@@ -97,7 +107,7 @@ async function handleResponse(req, res, body) {
         let file = await files.get(filePath, {
             compression,
             javaScript,
-            isMainCode: urlPath == '/main/main.js',
+            isMainCode: urlPath == '/main.js',
             streamAllowed: true
         });
         if(!ext) {

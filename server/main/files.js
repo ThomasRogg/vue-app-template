@@ -44,9 +44,9 @@ exports.get = async function get(filePath, options) {
     let cachePromise = cache[key];
     if(!cachePromise) {
         let doTranspile = options.javaScript && config.ENABLE_TRANSPILATION;
-        let doCache = config.CACHE_MAX_FILE_SIZE && (await fs.promises.stat(filePath)).size < config.CACHE_MAX_FILE_SIZE;
+        let doCache = config.CACHE_MAX_FILE_SIZE && (options.isMainCode || (await fs.promises.stat(filePath)).size < config.CACHE_MAX_FILE_SIZE);
 
-        if(options.streamAllowed && !doTranspile && !doCache) {
+        if(options.streamAllowed && !options.isMainCode && !doTranspile && !doCache) {
             // Return file streamed
             return await new Promise((resolve, reject) => {
                 let stream = fs.createReadStream(filePath);
@@ -70,7 +70,18 @@ exports.get = async function get(filePath, options) {
         async function handleLoad() {
             let data;
             if(options.javaScript) {
-                data = await fs.promises.readFile(filePath, 'utf8');
+                if(options.isMainCode) {
+                    let bufs = [];
+                    for(let i = 0; i < config.SCRIPTS.length; i++)
+                        bufs.push(fs.promises.readFile(config.SCRIPTS[i], 'utf8'));
+                    bufs = await Promise.all(bufs);
+
+                    data = mainPrefix;
+                    for(let i = 0; i < bufs.length; i++)
+                        data += bufs[i].replace('"use strict"', '').replace("'use strict'", '') + '\n';
+                } else
+                    data = await fs.promises.readFile(filePath, 'utf8');
+
                 if(doTranspile) {
                     let pos = filePath.lastIndexOf('/');
                     let filename = pos == -1 ? filePath : filePath.substr(pos + 1);
@@ -97,8 +108,6 @@ exports.get = async function get(filePath, options) {
                     })).code;
                 }
                 data = data.replace('"use strict"', '').replace("'use strict'", '');
-                if(options.isMainCode)
-                    data = mainPrefix + data;
                 if(config.STRICT_MODE)
                     data = '"use strict";\n' + data;
                 data = Buffer.from(data);

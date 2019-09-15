@@ -15,13 +15,15 @@ if(config.ENABLE_SSR) {
 
 let template;
 
-let renderer, components, appComponent;
+let renderer, components, appComponent, styles;
+
+let srcPath = path.join(__dirname, '../../src');
 
 exports.init = async function init() {
     if(!config.ENABLE_SSR)
         return;
 
-    let componentsPath = path.join(config.SRC_PATH, 'components');
+    let componentsPath = path.join(srcPath, 'components');
     let paths = await fs.promises.readdir(componentsPath);
 
     components = [];
@@ -53,10 +55,14 @@ exports.init = async function init() {
         }
     }
 
-    let template = await fs.promises.readFile(path.join(config.SRC_PATH, 'index.html'), 'utf8');
-    template = template.replace('[[libs]]', JSON.stringify(Object.keys(config.LIBS)));
+    let template = await fs.promises.readFile(path.join(srcPath, 'index.html'), 'utf8');
+    template = template.replace('[[libs]]', JSON.stringify(config.PRELOAD_MODULES));
     template = template.replace('[[components]]', JSON.stringify(components));
     renderer = vueRenderer.createRenderer({template});
+
+    styles = '';
+    for(let i = 0; i < config.STYLES.length; i++)
+        styles += await fs.promises.readFile(config.STYLES[i], 'utf8') + '\n';
 }
 
 exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
@@ -86,23 +92,23 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
         }
         iterateComponents(app);
 
-        let styles = (await files.get(path.join(config.SRC_PATH, 'main/style.css'), {})).data.toString();
+        let htmlStyles = styles;
         for(let name in componentNames) {
             try {
-                styles += (await files.get(path.join(config.SRC_PATH, 'components/' + name + '/style.css'), {})).data.toString();
+                htmlStyles += (await files.get(path.join(srcPath, 'components/' + name + '/style.css'), {})).data.toString() + '\n';
             } catch(err) {
                 if(err.code != 'ENOENT')
                     console.error(err);
             }
         }
-        html = html.replace('[[styles]]', styles);
+        html = html.replace('[[styles]]', htmlStyles);
         html = html.replace('[[loaded_components_map]]', JSON.stringify(componentNames));
 
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.end(html);
     });
 } : async function handleRequest(req, res) {
-    let componentsPath = path.join(config.SRC_PATH, 'components');
+    let componentsPath = path.join(srcPath, 'components');
     let paths = await fs.promises.readdir(componentsPath);
 
     components = [];
@@ -113,10 +119,12 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
         components.push(paths[i]);
     }
 
-    let html = (await files.get(path.join(config.SRC_PATH, 'index.html'), {})).data.toString();
-    html = html.replace('[[libs]]', JSON.stringify(Object.keys(config.LIBS)));
+    let html = (await files.get(path.join(srcPath, 'index.html'), {})).data.toString();
+    html = html.replace('[[libs]]', JSON.stringify(config.PRELOAD_MODULES));
     html = html.replace('[[components]]', JSON.stringify(components));
-    let styles = (await files.get(path.join(config.SRC_PATH, 'main/style.css'), {})).data.toString();
+    let styles = '';
+    for(let i = 0; i < config.STYLES.length; i++)
+        styles += (await files.get(config.STYLES[i], {})).data.toString() + '\n';
     html = html.replace('[[styles]]', styles);
     html = html.replace('[[loaded_components_map]]', 'null');
     html = html.replace('<!--vue-ssr-outlet-->', '<div id="app"></div>');
