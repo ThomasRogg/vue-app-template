@@ -8,6 +8,7 @@ const url       = require('url');
 
 const config    = require('../../config/config');
 
+const init      = require('./init');
 const files     = require('./files');
 const ssr       = require('./ssr');
 
@@ -177,7 +178,7 @@ function redirectRequest(req, res) {
 
 async function main() {
     try {
-        console.log("Loading...");
+        init.init();
 
         let sslPromises;
         if(config.HTTPS_PORT) {

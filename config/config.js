@@ -4,6 +4,9 @@ const path = require('path');
 
 exports.PRODUCTION              = false;
 
+exports.CONSOLE_STDOUT          = !exports.PRODUCTION;
+exports.CONSOLE_LOGFILE         = true;
+
 exports.HTTP_PORT               = exports.PRODUCTION ? 80 : 8000;
 exports.HTTPS_PORT              = exports.PRODUCTION ? 443 : 8443;
 
@@ -20,9 +23,10 @@ exports.STRICT_MODE             = !exports.PRODUCTION;
 exports.TRANSPILATION_TARGETS   = ['IE 10, last 2 versions'];
 exports.TRANSPILATION_MINIFY    = true;
 
-exports.CACHE_MAX_FILE_SIZE     = exports.PRODUCTION ? 1024 * 1024 : 0;
-
 exports.MAX_BODY_SIZE           = 10 * 1024 * 1024;
+
+exports.CACHE_MAX_FILE_SIZE     = exports.PRODUCTION ? 1024 * 1024 : 0;
+exports.MAX_LOG_FILE_SIZE       = 1024 * 1024 * 1024;
 
 exports.FILE_EXTENSIONS = {
     'html': {mime: 'text/html; charset=utf-8', compress: true},

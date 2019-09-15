@@ -1,41 +1,34 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
+add logfile for url
+auto rotate and remove
+logfile buffer.concat
+logfile entry on exit
+
+
+
+
+
 CSS conflict info
 
 menu example
 server side calculator example
 
+auto remove old logs
 vue-router!
 vuex on server side
 
-better error messages
-log for accesses
 mangle does not change global vars in module
-watch files and remove cache
-Preload all libraries in parallel => panic usw is not set outside o loop :-/
 should be able to run without javascript on client
 javascript ausschaltbar => wird bei IE gemacht
 favicon.ico
-api call auch mit websockets nativ
-websockets auto reload if watch
-load all components at ocne which are needed on start
 http2 over browserslist
 
-get rid of caching
-component must be able to be a async function
 max post size
 title and meta tags
 error pages for everything
 production/debug mode better
-https in config
 comments
-file caching
-client side reload component
-
-
-auto delete logs
-
-
 routes
 log content including access
 auto sitemap
