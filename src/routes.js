@@ -5,7 +5,8 @@ const lib = require('./main/lib');
 module.exports = {
     mode: 'history',
     routes: [
-        { path: '/', component: lib.getComponent('ExampleHello') },
+        { path: '/', redirect: '/Hello' },
+        { path: '/Hello', component: lib.getComponent('ExampleHello') },
         { path: '/Calc', component: lib.getComponent('ExampleCalc') },
         { path: '*', component: lib.getComponent('FileNotFound') }
     ],

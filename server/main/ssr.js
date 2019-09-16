@@ -79,6 +79,14 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
         render: h => h('App')
     });
 
+    let url = router.resolve(req.url).route.fullPath;
+    if(url != req.url) {
+        res.writeHead(301, {'Location': url});
+        res.end();
+
+        return;
+    }
+
     router.onReady(() => {
         let context = {
             statusCode: 200,
@@ -142,7 +150,7 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
             res.end(html);
         });
     });
-    router.push(req.url);
+    router.push(url);
 } : async function handleRequest(req, res) {
     let componentsPath = path.join(srcPath, 'components');
     let paths = await fs.promises.readdir(componentsPath);
