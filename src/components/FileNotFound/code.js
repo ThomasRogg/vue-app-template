@@ -1,5 +1,7 @@
+"use strict";
+
 module.exports = {
-    data: function() {
+    data() {
         if(this.$ssrContext)
             this.$ssrContext.statusCode = 404;
 

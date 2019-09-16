@@ -7,19 +7,20 @@ const config    = require('../../config/config');
 
 const files     = require('./files');
 
-let Vue, VueRouter, VueRenderer, routes;
+let Vue, VueRouter, VueRenderer, Vuex;
 if(config.ENABLE_SSR) {
     Vue = require('vue');
     VueRouter = require('vue-router');
+    Vuex = require('vuex');
     VueRenderer = require('vue-server-renderer');
 
     Vue.use(VueRouter);
+    Vue.use(Vuex);
     Vue.use(VueRenderer);
 }
 
-let template;
-
-let renderer, components, appComponent, styles;
+let renderer, components, styles;
+let routes, storeData;
 
 let srcPath = path.join(__dirname, '../../src');
 
@@ -56,6 +57,7 @@ exports.init = async function init() {
     }
 
     routes = require('../../src/routes');
+    storeData = require('../../src/store/index');
 
     let template = await fs.promises.readFile(path.join(srcPath, 'index.html'), 'utf8');
     template = template.replace('[[preload_modules]]', JSON.stringify(config.PRELOAD_MODULES));
@@ -69,17 +71,21 @@ exports.init = async function init() {
 }
 
 exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
-    let router = new VueRouter({
-        mode: 'history',
-        routes
-    });
+    let router = new VueRouter(routes);
+    let store = new Vuex.Store(storeData);
     let app = new Vue({
         router,
+        store,
         render: h => h('App')
     });
 
     router.onReady(() => {
-        let context = {statusCode: 200};
+        let context = {
+            statusCode: 200,
+            rendered() {
+                context.storeState = JSON.stringify(store.state);
+            }
+        };
         renderer.renderToString(app, context, async (err, html) => {
             if(err) {
                 console.error(err);
@@ -156,6 +162,7 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
         styles.push((await files.get(config.STYLES[i], {})).data.toString());
     html = html.replace('[[styles]]', styles.join('\n'));
     html = html.replace('[[loaded_components_map]]', 'null');
+    html = html.replace('{{{storeState}}}', 'null');
 
     let proto = req.connection.encrypted ? 'https://' : 'http://';
     let port = req.socket.localPort == (req.connection.encrypted ? 443 : 80) ? '' : ':' + req.socket.localPort;
@@ -172,7 +179,7 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
     }
     html = html.replace('[[base]]', proto + host + port + '/');
 
-    html = html.replace('<!--vue-ssr-outlet-->', '<div id="App"></div>');
+    html = html.replace('<!--vue-ssr-outlet-->', '<div></div>');
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.end(html);

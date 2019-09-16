@@ -1,14 +1,19 @@
 "use strict";
 
 module.exports = {
-    data: () => {
+    data() {
         return {
             counter: 0
         }
     },
-    mounted: function() {
+    mounted() {
         setInterval(() => {
             this.counter++;
         }, 10);
+    },
+    computed: {
+        doneLoading() {
+            return !this.$store.state.loading;
+        }
     }
 };

@@ -1,17 +1,19 @@
+"use strict";
+
 module.exports = {
-    data: () => {
+    data() {
         return {
             val: 0
         };
     },
     methods: {
-        num: (num) => {
+        num(num) {
             console.log("AA", num);
         },
-        dot: () => {
+        dot() {
             console.log("dot");
         },
-        op: (op) => {
+        op(op) {
             console.log("op", op);
         }
     }

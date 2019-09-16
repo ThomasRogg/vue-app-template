@@ -1,5 +1,5 @@
 <div id="App">
-    <img src="/components/app/loading.gif"> {{counter}}
+    <img src="/components/app/loading.gif" v-bind:class="{AppLoadingHidden: doneLoading}"> {{counter}}
 
 <p>
     <!-- use router-link component for navigation. -->

@@ -26,6 +26,17 @@ async function main() {
         }
     }
 
+    let store, loadingCount = 0;
+    function loading(inc) {
+        if(inc) {
+            if(!loadingCount++ && store)
+                store.commit('loading', true);
+        } else {
+            if(!--loadingCount && store)
+                store.commit('loading', false);
+        }
+    }
+
     function serverFetchSync(url, options) {
         let isStatus = true;
         function status(isStatusNow) {
@@ -36,19 +47,26 @@ async function main() {
             isStatus = isStatusNow;
         }
 
+        loading(true);
         while(true) {
             let request = new XMLHttpRequest();
-            request.open('POST', url, false);
+            let ok = true;
+            try {
+                request.open('POST', url, false);
+                request.responseType = 'text';
+                if(options && options.fileNotFoundOK)
+                    request.setRequestHeader('X-FileNotFound-OK', 'true')
+                request.send(null);
+            } catch(err) {
+                ok = false;
+            }
 
-            request.responseType = 'text';
-            if(options && options.fileNotFoundOK)
-                request.setRequestHeader('X-FileNotFound-OK', 'true')
-            request.send(null);
-
-            if(request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
+            if(ok && request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
                 status(true);
+                loading(false);
+
                 return request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText;
-            } else if(request.status) {
+            } else if(ok && request.status) {
                 document.getElementById('overlayPanic').style.display = '';
                 throw new Error('syncronous fetch of ' + url + ' returned status code ' + request.status);
             }
@@ -67,6 +85,7 @@ async function main() {
             isStatus = isStatusNow;
         }
 
+        loading(true);
         return new Promise((resolve, reject) => {
             function loop1() {
                 let done = false;
@@ -81,6 +100,8 @@ async function main() {
 
                     if(request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
                         status(true);
+                        loading(false);
+
                         resolve(request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText);
                     } else if(request.status)
                         panic(new Error('asyncronous fetch of ' + url + ' returned status code ' + request.status));
@@ -226,6 +247,7 @@ async function main() {
         document.getElementById('overlayPanic').style.display = '';
         console.error(err);
 
+		// Block foreever
         return new Promise(() => {});
     }
 
@@ -245,10 +267,15 @@ async function main() {
         // the other ones are lazy loaded
         const Vue = requireAbsoluteSync('vue');
         const VueRouter = requireAbsoluteSync('vue-router');
+        const Vuex = requireAbsoluteSync('vuex');
 
         Vue.use(VueRouter);
+        Vue.use(Vuex);
 
-        let componentPromises = [requireAbsoluteAsync('/routes')];
+        let componentPromises = [
+            requireAbsoluteAsync('/routes'),
+            requireAbsoluteAsync('/store/index')
+        ];
         for(let i = 0; i < components.length; i++) {
             if(loadedComponentsMap && loadedComponentsMap[components[i]]) {
                 // Load now
@@ -272,11 +299,19 @@ async function main() {
         let routes = componentPromises[0];
         if(typeof routes == 'function')
             routes = await routes();
+        let storeData = componentPromises[1];
+        if(typeof routes == 'function')
+            storeData = await storeData();
+
+        store = new Vuex.Store(storeData);
+        if(storeState)
+            store.replaceState(storeState);
+        if(loadingCount)
+            store.commit('loading', true);
+
         let app = new Vue({
-            router: new VueRouter({
-                mode: 'history',
-                routes
-            }),
+            router: new VueRouter(routes),
+            store,
             render: h => h('App')
         });
         app.$mount('body > :first-child', loadedComponentsMap ? true : false);

@@ -2,10 +2,14 @@
 
 base besser + was wenn .connection || .socket nicht mehr existieren
 
+head
+
 three modes prod devel-dynamic devel-ssr
 importCSS
 importJS
 fetch
+
+use ssrcontext for everything (including using function, if not works, then getter function)
 
 add logfile for url
 auto rotate and remove
@@ -23,9 +27,10 @@ auto sitemap
 api put
 api websocket
 
-google analytics
+preload javascript
+preload all files
 
-simple vuex
+google analytics
 
 license in package.json
 concat strings instead of chaining
