@@ -2,7 +2,7 @@
 
 const path = require('path');
 
-exports.PRODUCTION              = true;
+exports.PRODUCTION              = false;
 
 exports.CONSOLE_STDOUT          = !exports.PRODUCTION;
 exports.CONSOLE_LOGFILE         = true;

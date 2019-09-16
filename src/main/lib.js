@@ -1,5 +1,6 @@
 "use strict";
 
+// lazy require, so it is already loaded when getComponent is called
 let Vue;
 
 exports.IS_SERVER_SIDE = typeof process == 'object';
@@ -35,7 +36,7 @@ exports.getComponent = function(name) {
         throw new Error('component ' + name + ' not found');
 
     return component;
-}
+};
 
 if(!exports.IS_SERVER_SIDE)
     delete window._libExports;

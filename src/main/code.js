@@ -248,36 +248,35 @@ async function main() {
 
         Vue.use(VueRouter);
 
-        let componentPromises = [loadComponent('App', loadedComponentsMap ? true : false)];
         for(let i = 0; i < components.length; i++) {
             if(components[i] == 'App')
                 continue;
 
-            if(loadedComponentsMap && loadedComponentsMap[components[i]])
-                componentPromises.push(loadComponent(components[i], true))
-            else {
-                // Directly giving Vue.component the loadComponent promise does not work
+            let promise;
+            if(loadedComponentsMap && loadedComponentsMap[components[i]]) {
+                // Load now
+                promise = loadComponent(components[i], true);
+                Vue.component(components[i], (resolve, reject) => {
+                    promise.then(resolve).catch(reject);
+                });
+            } else {
+                // Load later
                 Vue.component(components[i], (resolve, reject) => {
                     loadComponent(components[i]).then(resolve).catch(reject);
                 });
             }
         }
-        componentPromises.push(requireAbsoluteAsync('/routes'));
-        componentPromises = await Promise.all(componentPromises);
-        for(let i = 0, j = 1; i < components.length; i++) {
-            if(components[i] == 'App')
-                continue;
 
-            if(loadedComponentsMap && loadedComponentsMap[components[i]])
-                Vue.component(components[i], componentPromises[j++]);
-        }
-
+        // Create app and hydrate from server
+        let appPromises = await Promise.all([
+            loadComponent('App', loadedComponentsMap ? true : false),
+            requireAbsoluteAsync('/routes')
+        ]);
         let app = new Vue({
-            router: requireAbsoluteSync('/routes')(),
-            ...componentPromises[0]
+            router: new VueRouter(appPromises[1]),
+            ...appPromises[0]
         });
 
-        // Hydrate from server
         app.$mount('#App', loadedComponentsMap ? true : false);
     } catch(err) {
         await panic(err);

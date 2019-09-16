@@ -7,16 +7,14 @@ const config    = require('../../config/config');
 
 const files     = require('./files');
 
-let Vue, VueRenderer, routes;
+let Vue, VueRouter, VueRenderer, routes;
 if(config.ENABLE_SSR) {
     Vue = require('vue');
-    const VueRouter = require('vue-router');
+    VueRouter = require('vue-router');
     VueRenderer = require('vue-server-renderer');
 
     Vue.use(VueRouter);
     Vue.use(VueRenderer);
-
-    routes = require('../../src/routes');
 }
 
 let template;
@@ -58,6 +56,8 @@ exports.init = async function init() {
             Vue.component(paths[i], code);
     }
 
+    routes = require('../../src/routes');
+
     let template = await fs.promises.readFile(path.join(srcPath, 'index.html'), 'utf8');
     template = template.replace('[[preload_modules]]', JSON.stringify(config.PRELOAD_MODULES));
     template = template.replace('[[components]]', JSON.stringify(components));
@@ -70,7 +70,7 @@ exports.init = async function init() {
 }
 
 exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
-    let router = routes();
+    let router = new VueRouter(routes);
     let app = new Vue({
         router,
         ...appComponent

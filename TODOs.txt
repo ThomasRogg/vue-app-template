@@ -2,6 +2,10 @@
 
 base besser + was wenn .connection || .socket nicht mehr existieren
 
+importCSS
+importJS
+fetch
+
 add logfile for url
 auto rotate and remove
 logfile buffer.concat
