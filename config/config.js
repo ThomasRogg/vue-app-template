@@ -15,7 +15,7 @@ exports.HTTPS_SSL_KEY           = path.join(__dirname, 'ssl.key');
 exports.HTTPS_SSL_CERT          = path.join(__dirname, 'ssl.crt');
 //exports.HTTPS_SSL_CA            = path.join(__dirname, 'ssl_ca.cert');
 
-exports.ENABLE_SSR              = exports.PRODUCTION;
+exports.ENABLE_SSR              = true;//exports.PRODUCTION;
 exports.ENABLE_TRANSPILATION    = exports.PRODUCTION;
 exports.ENABLE_COMPRESSION      = true;
 

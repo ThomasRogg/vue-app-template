@@ -2,6 +2,7 @@
 
 base besser + was wenn .connection || .socket nicht mehr existieren
 
+three modes prod devel-dynamic devel-ssr
 importCSS
 importJS
 fetch

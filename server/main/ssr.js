@@ -36,24 +36,23 @@ exports.init = async function init() {
             continue;
         components.push(paths[i]);
 
-        let code;
+        let ok = false;
         try {
-            code = require(componentsPath + '/' + paths[i] + '/code');
-        } catch(e) {
-            if(e.code != 'MODULE_NOT_FOUND')
-                throw e;
+            await fs.promises.access(componentsPath + '/' + paths[i] + '/code.js');
+            ok = true;
+        } catch(e) {}
 
+        let code;
+        if(ok) {
+            code = require(componentsPath + '/' + paths[i] + '/code.js');
+            if(typeof code == 'function')
+                code = await code();
+        } else
             code = {};
-        }
-        if(typeof code == 'function')
-            code = await code();
         if(code.template === undefined)
-            code.template = '<div id="' + paths[i] + '">' + await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8') + '</div>';
+            code.template = await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8');
 
-        if(paths[i] == 'App')
-            appComponent = code;
-        else
-            Vue.component(paths[i], code);
+        Vue.component(paths[i], code);
     }
 
     routes = require('../../src/routes');
@@ -70,10 +69,13 @@ exports.init = async function init() {
 }
 
 exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
-    let router = new VueRouter(routes);
+    let router = new VueRouter({
+        mode: 'history',
+        routes
+    });
     let app = new Vue({
         router,
-        ...appComponent
+        render: h => h('App')
     });
 
     router.onReady(() => {

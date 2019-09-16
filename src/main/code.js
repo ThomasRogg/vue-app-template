@@ -37,23 +37,22 @@ async function main() {
         }
 
         while(true) {
-            try {
-                let request = new XMLHttpRequest();
-                request.open('POST', url, false);
-                if(options && options.fileNotFoundOK)
-                    request.setRequestHeader('X-FileNotFound-OK', 'true')
-                request.send(null);
+            let request = new XMLHttpRequest();
+            request.open('POST', url, false);
 
-                if(request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
-                    status(true);
-                    return request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText;
-                } else if(request.status) {
-                    document.getElementById('overlayPanic').style.display = '';
-                    throw new Error('syncronous fetch of ' + url + ' returned status code ' + request.status);
-                }
-            } catch(err) {
-                console.error(err);
+            request.responseType = 'text';
+            if(options && options.fileNotFoundOK)
+                request.setRequestHeader('X-FileNotFound-OK', 'true')
+            request.send(null);
+
+            if(request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
+                status(true);
+                return request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText;
+            } else if(request.status) {
+                document.getElementById('overlayPanic').style.display = '';
+                throw new Error('syncronous fetch of ' + url + ' returned status code ' + request.status);
             }
+
             status(false);
         }
     }
@@ -107,6 +106,7 @@ async function main() {
                     loop1();
                 };
 
+                request.responseType = 'text';
                 request.timeout = FETCH_TIMEOUT_MS;
                 if(options && options.fileNotFoundOK)
                     request.setRequestHeader('X-FileNotFoundOK', 'true')
@@ -205,7 +205,7 @@ async function main() {
                         throw new Error('/components/' + name + '/template.html not found');
 
                     let template = elems[1];
-                    code.template = '<div id="' + name + '">' + template + '</div>';
+                    code.template = template;
                 }
 
                 if(!cssLoaded) {
@@ -232,7 +232,7 @@ async function main() {
     try {
         // Preload all libraries in parallel
         window._libExports = {
-            requireAbsoluteSync,
+            requireAbsoluteAsync,
             panic
         }
 
@@ -248,14 +248,13 @@ async function main() {
 
         Vue.use(VueRouter);
 
+        let componentPromises = [requireAbsoluteAsync('/routes')];
         for(let i = 0; i < components.length; i++) {
-            if(components[i] == 'App')
-                continue;
-
-            let promise;
             if(loadedComponentsMap && loadedComponentsMap[components[i]]) {
                 // Load now
-                promise = loadComponent(components[i], true);
+                let promise = loadComponent(components[i], true);
+
+                componentPromises.push(promise);
                 Vue.component(components[i], (resolve, reject) => {
                     promise.then(resolve).catch(reject);
                 });
@@ -266,18 +265,21 @@ async function main() {
                 });
             }
         }
+        // We need to resolve all components here, because overwise hydration might bail
+        componentPromises = await Promise.all(componentPromises);
 
         // Create app and hydrate from server
-        let appPromises = await Promise.all([
-            loadComponent('App', loadedComponentsMap ? true : false),
-            requireAbsoluteAsync('/routes')
-        ]);
+        let routes = componentPromises[0];
+        if(typeof routes == 'function')
+            routes = await routes();
         let app = new Vue({
-            router: new VueRouter(appPromises[1]),
-            ...appPromises[0]
+            router: new VueRouter({
+                mode: 'history',
+                routes
+            }),
+            render: h => h('App')
         });
-
-        app.$mount('#App', loadedComponentsMap ? true : false);
+        app.$mount('body > :first-child', loadedComponentsMap ? true : false);
     } catch(err) {
         await panic(err);
     }
