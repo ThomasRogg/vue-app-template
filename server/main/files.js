@@ -24,9 +24,11 @@ let cache = {}, mainPrefix = '';
 
 exports.init = async function() {
     if(config.ENABLE_TRANSPILATION && config.TRANSPILATION_TARGETS && config.TRANSPILATION_TARGETS.length)
-        mainPrefix
-            = await coreJSBuilder({targets: config.TRANSPILATION_TARGETS}) + '\n'
-            + await fs.readFileSync(path.join(__dirname, '../../node_modules/regenerator-runtime/runtime.js')) + '\n';
+        mainPrefix =
+            (await Promise.all([
+                coreJSBuilder({targets: config.TRANSPILATION_TARGETS}),
+                fs.promises.readFile(path.join(__dirname, '../../node_modules/regenerator-runtime/runtime.js'), 'utf8')
+            ])).join('\n');
 }
 
 /*
@@ -76,9 +78,10 @@ exports.get = async function get(filePath, options) {
                         bufs.push(fs.promises.readFile(config.SCRIPTS[i], 'utf8'));
                     bufs = await Promise.all(bufs);
 
-                    data = mainPrefix;
+                    data = [];
                     for(let i = 0; i < bufs.length; i++)
-                        data += bufs[i].replace('"use strict"', '').replace("'use strict'", '') + '\n';
+                        data.push(bufs[i].replace('"use strict"', '').replace("'use strict'", ''));
+                    data = data.join('\n');
                 } else
                     data = await fs.promises.readFile(filePath, 'utf8');
 
@@ -107,6 +110,8 @@ exports.get = async function get(filePath, options) {
                         configFile: false,
                     })).code;
                 }
+                if(options.isMainCode)
+                    data = mainPrefix + data;
                 data = data.replace('"use strict"', '').replace("'use strict'", '');
                 if(config.STRICT_MODE)
                     data = '"use strict";\n' + data;

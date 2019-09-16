@@ -184,8 +184,7 @@ async function main() {
         if(config.HTTPS_PORT) {
             sslPromises = [
                 fs.promises.readFile(config.HTTPS_SSL_KEY),
-                fs.promises.readFile(config.HTTPS_SSL_CERT),
-                
+                fs.promises.readFile(config.HTTPS_SSL_CERT)
             ];
             if(config.HTTPS_SSL_CA)
                 sslPromises.push(fs.promises.readFile(config.HTTPS_SSL_CA));

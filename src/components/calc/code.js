@@ -1,6 +1,5 @@
 
-module.exports = async function() {
-    return {
+module.exports = {
     data: () => {
         return {
             val: 0
@@ -17,5 +16,4 @@ module.exports = async function() {
             console.log("op", op);
         }
     }
-}
 };

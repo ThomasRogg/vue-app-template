@@ -2,6 +2,7 @@
 <html>
     <head>
         <title>Vue App Template</title>
+        <base href="[[base]]">
 
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,17 +21,13 @@
             <p><img src="/main/failure.png"></p>
             <p>Connection lost. We will trying again periodically!</p>
         </div>
-        <div class="overlay" id="overlayFileNotFound" style="display: none">
-            <p><img src="/main/failure.png"></p>
-            <p>File not found!</p>
-        </div>
         <div class="overlay" id="overlayPanic" style="display: none">
             <p><img src="/main/failure.png"></p>
             <p>An unexpected error occurred!</p>
         </div>
 
         <script type="text/javascript">
-            var libs = [[libs]];
+            var preloadModules = [[preload_modules]];
             var components = [[components]];
             var loadedComponentsMap = [[loaded_components_map]];
         </script>

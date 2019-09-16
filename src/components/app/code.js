@@ -1,8 +1,10 @@
 "use strict";
 
 module.exports = {
-    data: {
-        counter: 0
+    data: () => {
+        return {
+            counter: 0
+        }
     },
     mounted: function() {
         setInterval(() => {

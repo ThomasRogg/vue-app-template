@@ -1,5 +1,7 @@
 "use strict";
 
+let Vue;
+
 exports.IS_SERVER_SIDE = typeof process == 'object';
 
 exports.requireAsync = exports.IS_SERVER_SIDE ? async function requireSync(module) {
@@ -23,6 +25,17 @@ exports.panic = exports.IS_SERVER_SIDE ? function panic(err) {
     console.error(err);
     return new Promise(() => {});
 } : window._libExports.panic;
+
+exports.getComponent = function(name) {
+    if(!Vue)
+        Vue = require('vue');
+
+    let component = Vue.options.components[name];
+    if(!component)
+        throw new Error('component ' + name + ' not found');
+
+    return component;
+}
 
 if(!exports.IS_SERVER_SIDE)
     delete window._libExports;

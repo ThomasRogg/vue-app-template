@@ -5,6 +5,12 @@
  */
 
 async function main() {
+    if(loadedComponentsMap && window.location.protocol != 'http:' && window.location.protocol != 'https:') {
+        // User downloaded the web page. Let him see a static version
+        // Only possible with SSR enabled (loadedComponentsMap != null)
+        return;
+    }
+
     const FETCH_TIMEOUT_MS = 30000;
 
     let loadedModules = {}, loadedModulesAsync = {}, loadedComponents = {};
@@ -15,9 +21,8 @@ async function main() {
             if(!connectionErrorCount++)
                 document.getElementById('overlayNoConnection').style.display = '';
         } else {
-            if(!--connectionErrorCount) {
+            if(!--connectionErrorCount)
                 document.getElementById('overlayNoConnection').style.display = 'none';
-            }
         }
     }
 
@@ -39,10 +44,7 @@ async function main() {
                     request.setRequestHeader('X-FileNotFound-OK', 'true')
                 request.send(null);
 
-                if((request.status == 404 || request.getResponseHeader('X-FileNotFound')) && !(options && options.fileNotFoundOK)) {
-                    document.getElementById('overlayFileNotFound').style.display = '';
-                    throw new Error(url + ' not found');
-                } else if(request.status >= 200 && request.status < 300) {
+                if(request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
                     status(true);
                     return request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText;
                 } else if(request.status) {
@@ -78,10 +80,7 @@ async function main() {
                         return;
                     done = true;
 
-                    if((request.status == 404 || request.getResponseHeader('X-FileNotFound')) && !(options && options.fileNotFoundOK)) {
-                        console.error(new Error(url + ' not found'));
-                        document.getElementById('overlayFileNotFound').style.display = '';
-                    } else if(request.status >= 200 && request.status < 300) {
+                    if(request.status >= 200 && request.status < 300 && (!request.getResponseHeader('X-FileNotFound') || (options && options.fileNotFoundOK))) {
                         status(true);
                         resolve(request.getResponseHeader('X-FileNotFound') ? undefined : request.responseText);
                     } else if(request.status)
@@ -163,7 +162,7 @@ async function main() {
         console.warn('Fetching ' + path + ' in blocking mode as not loaded yet. Please use await require(\'[...]/main/lib\').requireAsync(\'' + origPath + '\') instead of require');
 
         let response = serverFetchSync(path, options);
-        return response ? loadModule(path, response) : {};
+        return response ? loadModule(path, response) : undefined;
     }
 
     async function requireAbsoluteAsync(path, options) {
@@ -178,7 +177,7 @@ async function main() {
         if(!loadedPromise)
             loadedPromise = loadedModulesAsync[path] = async function() {
                 let response = await serverFetchAsync(path, options);
-                return response ? loadModule(path, response) : {};
+                return response ? loadModule(path, response) : undefined;
             }();
         return await loadedPromise;
     }
@@ -196,10 +195,12 @@ async function main() {
                 elems = await Promise.all(elems);
 
                 let code = elems[0];
-                if(typeof code == 'function')
+                if(!code)
+                    code = {};
+                else if(typeof code == 'function')
                     code = await code();
 
-                if(!code.template) {
+                if(code.template === undefined) {
                     if(elems[1] === undefined)
                         throw new Error('/components/' + name + '/template.html not found');
 
@@ -223,6 +224,8 @@ async function main() {
 
     function panic(err) {
         document.getElementById('overlayPanic').style.display = '';
+        console.error(err);
+
         return new Promise(() => {});
     }
 
@@ -234,17 +237,20 @@ async function main() {
         }
 
         let libsPromises = [requireAbsoluteAsync('/main/lib')];
-        for(let i = 0; i < libs.length; i++)
-            libsPromises.push(requireAbsoluteAsync(libs[i]));
+        for(let i = 0; i < preloadModules.length; i++)
+            libsPromises.push(requireAbsoluteAsync(preloadModules[i]));
         libsPromises = await Promise.all(libsPromises);
 
         // Register components. The ones we are already using from SSR are loaded directly,
         // the other ones are lazy loaded
         const Vue = requireAbsoluteSync('vue');
+        const VueRouter = requireAbsoluteSync('vue-router');
 
-        let componentPromises = [loadComponent('app', loadedComponentsMap ? true : false)];
+        Vue.use(VueRouter);
+
+        let componentPromises = [loadComponent('App', loadedComponentsMap ? true : false)];
         for(let i = 0; i < components.length; i++) {
-            if(components[i] == 'app')
+            if(components[i] == 'App')
                 continue;
 
             if(loadedComponentsMap && loadedComponentsMap[components[i]])
@@ -256,18 +262,23 @@ async function main() {
                 });
             }
         }
+        componentPromises.push(requireAbsoluteAsync('/routes'));
         componentPromises = await Promise.all(componentPromises);
         for(let i = 0, j = 1; i < components.length; i++) {
-            if(components[i] == 'app')
+            if(components[i] == 'App')
                 continue;
 
             if(loadedComponentsMap && loadedComponentsMap[components[i]])
                 Vue.component(components[i], componentPromises[j++]);
         }
 
-        let app = new Vue(componentPromises[0]);
+        let app = new Vue({
+            router: requireAbsoluteSync('/routes')(),
+            ...componentPromises[0]
+        });
+
         // Hydrate from server
-        app.$mount('#app', loadedComponentsMap ? true : false);
+        app.$mount('#App', loadedComponentsMap ? true : false);
     } catch(err) {
         await panic(err);
     }

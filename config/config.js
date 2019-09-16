@@ -2,15 +2,15 @@
 
 const path = require('path');
 
-exports.PRODUCTION              = false;
+exports.PRODUCTION              = true;
 
 exports.CONSOLE_STDOUT          = !exports.PRODUCTION;
 exports.CONSOLE_LOGFILE         = true;
 
 exports.HTTP_PORT               = exports.PRODUCTION ? 80 : 8000;
-exports.HTTPS_PORT              = exports.PRODUCTION ? 443 : 8443;
+exports.HTTP_REDIRECT_HTTPS     = exports.PRODUCTION ? true : false;
 
-exports.HTTPS_REDIRECT_HTTP     = exports.PRODUCTION ? true : false;
+exports.HTTPS_PORT              = exports.PRODUCTION ? 443 : 8443;
 exports.HTTPS_SSL_KEY           = path.join(__dirname, 'ssl.key');
 exports.HTTPS_SSL_CERT          = path.join(__dirname, 'ssl.crt');
 //exports.HTTPS_SSL_CA            = path.join(__dirname, 'ssl_ca.cert');
@@ -20,7 +20,8 @@ exports.ENABLE_TRANSPILATION    = exports.PRODUCTION;
 exports.ENABLE_COMPRESSION      = true;
 
 exports.STRICT_MODE             = !exports.PRODUCTION;
-exports.TRANSPILATION_TARGETS   = ['IE 10, last 2 versions'];
+// This is the settings which is used when entering "defaults". Sounds reasonable, so a good starting point
+exports.TRANSPILATION_TARGETS   = ['> 0.5%, last 2 versions, Firefox ESR, not dead'];
 exports.TRANSPILATION_MINIFY    = true;
 
 exports.MAX_BODY_SIZE           = 10 * 1024 * 1024;
