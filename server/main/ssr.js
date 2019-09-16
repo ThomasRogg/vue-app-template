@@ -90,7 +90,7 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
                 return;
             }
 
-            let componentNames = {'App': true};
+            let componentNames = {};
             let compSet = new Set();
             function iterateComponents(component) {
                 if(compSet.has(component))
