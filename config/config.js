@@ -2,6 +2,12 @@
 
 const path = require('path');
 
+let args = process.argv.slice(2);
+if(args.length != 1 || (args[0] != 'production' && args[0] != 'devel-ssr' && args[0] != 'devel')) {
+    console.error('Syntax: ./index.js production|devel-ssr|devel');
+    return;
+}
+
 exports.PRODUCTION              = false;
 
 exports.CONSOLE_STDOUT          = !exports.PRODUCTION;

@@ -1,40 +1,33 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
-base besser + was wenn .connection || .socket nicht mehr existieren
-
-head
-
-three modes prod devel-dynamic devel-ssr
 importCSS
 importJS
 fetch
 
-use ssrcontext for everything (including using function, if not works, then getter function)
+head title and meta tags
+
 
 add logfile for url
 auto rotate and remove
 logfile buffer.concat
 logfile entry on exit
 
+three modes prod devel-dynamic devel-ssr
 add package.json scripts (production and debug) .. info port
-CSS conflict info
+license in package.json
 
+CSS conflict info
 mangle does not change global vars in module
 
-title and meta tags
-
 auto sitemap
-api put
-api websocket
 
 preload javascript
 preload all files
 
 google analytics
 
-license in package.json
-concat strings instead of chaining
-
+api put
+api websocket
 
 
 EXAMPLE
@@ -56,13 +49,8 @@ LATER
 vuex loading lazy
 global server store (for users)
 session
-local storage
 http/2
 http2 over browserslist
 different languages
 Client side correct file name
-
-
-
-MUCH LATER
 Doku

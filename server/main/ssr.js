@@ -25,49 +25,48 @@ let routes, storeData;
 let srcPath = path.join(__dirname, '../../src');
 
 exports.init = async function init() {
-    if(!config.ENABLE_SSR)
-        return;
+    if(config.ENABLE_SSR) {
+        let componentsPath = path.join(srcPath, 'components');
+        let paths = await fs.promises.readdir(componentsPath);
 
-    let componentsPath = path.join(srcPath, 'components');
-    let paths = await fs.promises.readdir(componentsPath);
+        components = [];
+        for(let i = 0; i < paths.length; i++) {
+            if(paths[i][0] == '.')
+                continue;
+            components.push(paths[i]);
 
-    components = [];
-    for(let i = 0; i < paths.length; i++) {
-        if(paths[i][0] == '.')
-            continue;
-        components.push(paths[i]);
+            let ok = false;
+            try {
+                await fs.promises.access(componentsPath + '/' + paths[i] + '/code.js');
+                ok = true;
+            } catch(e) {}
 
-        let ok = false;
-        try {
-            await fs.promises.access(componentsPath + '/' + paths[i] + '/code.js');
-            ok = true;
-        } catch(e) {}
+            let code;
+            if(ok) {
+                code = require(componentsPath + '/' + paths[i] + '/code.js');
+                if(typeof code == 'function')
+                    code = await code();
+            } else
+                code = {};
+            if(code.template === undefined)
+                code.template = await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8');
 
-        let code;
-        if(ok) {
-            code = require(componentsPath + '/' + paths[i] + '/code.js');
-            if(typeof code == 'function')
-                code = await code();
-        } else
-            code = {};
-        if(code.template === undefined)
-            code.template = await fs.promises.readFile(componentsPath + '/' + paths[i] + '/template.html', 'utf8');
+            Vue.component(paths[i], code);
+        }
 
-        Vue.component(paths[i], code);
+        routes = require('../../src/routes');
+        storeData = require('../../src/store/index');
+
+        let template = await fs.promises.readFile(path.join(srcPath, 'index.html'), 'utf8');
+        template = template.replace('[[preload_modules]]', JSON.stringify(config.PRELOAD_MODULES));
+        template = template.replace('[[components]]', JSON.stringify(components));
+        renderer = VueRenderer.createRenderer({template});
+
+        styles = [];
+        for(let i = 0; i < config.STYLES.length; i++)
+            styles.push(fs.promises.readFile(config.STYLES[i], 'utf8'));
+        styles = (await Promise.all(styles)).join('\n');
     }
-
-    routes = require('../../src/routes');
-    storeData = require('../../src/store/index');
-
-    let template = await fs.promises.readFile(path.join(srcPath, 'index.html'), 'utf8');
-    template = template.replace('[[preload_modules]]', JSON.stringify(config.PRELOAD_MODULES));
-    template = template.replace('[[components]]', JSON.stringify(components));
-    renderer = VueRenderer.createRenderer({template});
-
-    styles = [];
-    for(let i = 0; i < config.STYLES.length; i++)
-        styles.push(fs.promises.readFile(config.STYLES[i], 'utf8'));
-    styles = (await Promise.all(styles)).join('\n');
 }
 
 exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
@@ -88,10 +87,31 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
     }
 
     router.onReady(() => {
+        let componentNames = {};
         let context = {
+            base: req.baseURL,
             statusCode: 200,
             rendered() {
-                context.storeState = JSON.stringify(store.state);
+                let compSet = new Set();
+                function iterateComponents(component) {
+                    if(compSet.has(component))
+                        return;
+                    compSet.add(component);
+            
+                    let name = component.$options.name;
+                    if(name)
+                        componentNames[name] = true;
+                    for(let i = 0; i < component.$children.length; i++)
+                        iterateComponents(component.$children[i]);
+                }
+                iterateComponents(app);
+
+                context.__INITIAL_DATA__ = JSON.stringify({
+                    preloadModules: config.PRELOAD_MODULES,
+                    components,
+                    loadedComponents: componentNames,
+                    state: store.state
+                });
             }
         };
         renderer.renderToString(app, context, async (err, html) => {
@@ -104,21 +124,6 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
                 return;
             }
 
-            let componentNames = {};
-            let compSet = new Set();
-            function iterateComponents(component) {
-                if(compSet.has(component))
-                    return;
-                compSet.add(component);
-        
-                let name = component.$options.name;
-                if(name)
-                    componentNames[name] = true;
-                for(let i = 0; i < component.$children.length; i++)
-                    iterateComponents(component.$children[i]);
-            }
-            iterateComponents(app);
-
             let htmlStyles = [styles];
             for(let name in componentNames) {
                 try {
@@ -129,22 +134,6 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
                 }
             }
             html = html.replace('[[styles]]', htmlStyles.join('\n'));
-            html = html.replace('[[loaded_components_map]]', JSON.stringify(componentNames));
-
-            let proto = req.connection.encrypted ? 'https://' : 'http://';
-            let port = req.socket.localPort == (req.connection.encrypted ? 443 : 80) ? '' : ':' + req.socket.localPort;
-            let host = req.headers['host'];
-            if(host) {
-                if(host.lastIndexOf(']') < host.lastIndexOf(':'))
-                    port = '';
-                else if(host.indexOf(':') >= 0)
-                        host = '[' + host + ']';
-            } else {
-                host = req.socket.localAddress;
-                if(host.indexOf(':') >= 0)
-                    host = '[' + host + ']';
-            }
-            html = html.replace('[[base]]', proto + host + port + '/');
 
             res.writeHead(context.statusCode, {'Content-Type': 'text/html; charset=utf-8'});
             res.end(html);
@@ -152,6 +141,7 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
     });
     router.push(url);
 } : async function handleRequest(req, res) {
+    // Client side rendering only
     let componentsPath = path.join(srcPath, 'components');
     let paths = await fs.promises.readdir(componentsPath);
 
@@ -162,31 +152,17 @@ exports.handleRequest = config.ENABLE_SSR ? function handleRequest(req, res) {
         components.push(paths[i]);
     }
 
-    let html = (await files.get(path.join(srcPath, 'index.html'), {})).data.toString();
-    html = html.replace('[[preload_modules]]', JSON.stringify(config.PRELOAD_MODULES));
-    html = html.replace('[[components]]', JSON.stringify(components));
     let styles = [];
     for(let i = 0; i < config.STYLES.length; i++)
         styles.push((await files.get(config.STYLES[i], {})).data.toString());
+
+    let html = (await files.get(path.join(srcPath, 'index.html'), {})).data.toString();
+    html = html.replace('{{base}}', req.baseURL);
     html = html.replace('[[styles]]', styles.join('\n'));
-    html = html.replace('[[loaded_components_map]]', 'null');
-    html = html.replace('{{{storeState}}}', 'null');
-
-    let proto = req.connection.encrypted ? 'https://' : 'http://';
-    let port = req.socket.localPort == (req.connection.encrypted ? 443 : 80) ? '' : ':' + req.socket.localPort;
-    let host = req.headers['host'];
-    if(host) {
-        if(host.lastIndexOf(']') < host.lastIndexOf(':'))
-            port = '';
-        else if(host.indexOf(':') >= 0)
-                host = '[' + host + ']';
-    } else {
-        host = req.socket.localAddress;
-        if(host.indexOf(':') >= 0)
-            host = '[' + host + ']';
-    }
-    html = html.replace('[[base]]', proto + host + port + '/');
-
+    html = html.replace('{{{__INITIAL_DATA__}}}', JSON.stringify({
+        preloadModules: config.PRELOAD_MODULES,
+        components
+    }));
     html = html.replace('<!--vue-ssr-outlet-->', '<div></div>');
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

@@ -5,7 +5,7 @@
  */
 
 async function main() {
-    if(loadedComponentsMap && window.location.protocol != 'http:' && window.location.protocol != 'https:') {
+    if(window.__INITIAL_DATA__.loadedComponents && window.location.protocol != 'http:' && window.location.protocol != 'https:') {
         // User downloaded the web page. Let him see a static version
         // Only possible with SSR enabled (loadedComponentsMap != null)
         return;
@@ -252,6 +252,9 @@ async function main() {
     }
 
     try {
+        let initialData = window.__INITIAL_DATA__;
+        delete window.__INITIAL_DATA__;
+
         // Preload all libraries in parallel
         window._libExports = {
             requireAbsoluteAsync,
@@ -259,8 +262,8 @@ async function main() {
         }
 
         let libsPromises = [requireAbsoluteAsync('/main/lib')];
-        for(let i = 0; i < preloadModules.length; i++)
-            libsPromises.push(requireAbsoluteAsync(preloadModules[i]));
+        for(let i = 0; i < initialData.preloadModules.length; i++)
+            libsPromises.push(requireAbsoluteAsync(initialData.preloadModules[i]));
         libsPromises = await Promise.all(libsPromises);
 
         // Register components. The ones we are already using from SSR are loaded directly,
@@ -276,19 +279,20 @@ async function main() {
             requireAbsoluteAsync('/routes'),
             requireAbsoluteAsync('/store/index')
         ];
-        for(let i = 0; i < components.length; i++) {
-            if(loadedComponentsMap && loadedComponentsMap[components[i]]) {
+        for(let i = 0; i < initialData.components.length; i++) {
+            let component = initialData.components[i];
+            if(initialData.loadedComponents && initialData.loadedComponents[component]) {
                 // Load now
-                let promise = loadComponent(components[i], true);
+                let promise = loadComponent(component, true);
 
                 componentPromises.push(promise);
-                Vue.component(components[i], (resolve, reject) => {
+                Vue.component(component, (resolve, reject) => {
                     promise.then(resolve).catch(reject);
                 });
             } else {
                 // Load later
-                Vue.component(components[i], (resolve, reject) => {
-                    loadComponent(components[i]).then(resolve).catch(reject);
+                Vue.component(component, (resolve, reject) => {
+                    loadComponent(component).then(resolve).catch(reject);
                 });
             }
         }
@@ -304,8 +308,8 @@ async function main() {
             storeData = await storeData();
 
         store = new Vuex.Store(storeData);
-        if(storeState)
-            store.replaceState(storeState);
+        if(initialData.state)
+            store.replaceState(initialData.state);
         if(loadingCount)
             store.commit('loading', true);
 
@@ -314,7 +318,7 @@ async function main() {
             store,
             render: h => h('App')
         });
-        app.$mount('body > :first-child', loadedComponentsMap ? true : false);
+        app.$mount('body > :first-child', initialData.loadedComponents ? true : false);
     } catch(err) {
         await panic(err);
     }

@@ -139,6 +139,21 @@ async function handleResponse(req, res, body) {
 function handleRequest(req, res) {
     let data = [], allSize = 0;
 
+    let proto = req.connection.encrypted ? 'https://' : 'http://';
+    let port = req.socket.localPort == (req.connection.encrypted ? 443 : 80) ? '' : ':' + req.socket.localPort;
+    let host = req.headers['host'];
+    if(host) {
+        if(host.lastIndexOf(']') < host.lastIndexOf(':'))
+            port = '';
+        else if(host.indexOf(':') >= 0)
+                host = '[' + host + ']';
+    } else {
+        host = req.socket.localAddress;
+        if(host.indexOf(':') >= 0)
+            host = '[' + host + ']';
+    }
+    req.baseURL = proto + host + port + '/';
+
     req.on('data', (chunk) => {
         if(!data)
             return;
