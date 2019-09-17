@@ -1,20 +1,20 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
+three modes prod devel-dynamic devel-ssr
+add package.json scripts (production and debug) .. info port
+license in package.json
+
 importCSS
 importJS
 fetch
 
-head title and meta tags
-
+head title and meta tags and script and style tags
+title filter
 
 add logfile for url
 auto rotate and remove
 logfile buffer.concat
 logfile entry on exit
-
-three modes prod devel-dynamic devel-ssr
-add package.json scripts (production and debug) .. info port
-license in package.json
 
 CSS conflict info
 mangle does not change global vars in module
