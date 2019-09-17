@@ -1,56 +1,72 @@
 *** THINGS TO DO, ONLY INTERNAL FOR TR ***
 
+17.09.2019
+
+(1)
+config: keep in background
 three modes prod devel-dynamic devel-ssr
+listening on port...
+error when port used => close
 add package.json scripts (production and debug) .. info port
 license in package.json
 
+(2)
 importCSS
 importJS
 fetch
 
+(3)
 head title and meta tags and script and style tags
 title filter
 
+(4)
 add logfile for url
 auto rotate and remove
 logfile buffer.concat
 logfile entry on exit
 
+(5)
 CSS conflict info
 mangle does not change global vars in module
 
+(6)
 auto sitemap
+google analytics
 
+(7)
 preload javascript
 preload all files
 
-google analytics
-
+(8)
 api put
+session
+
+(9)
 api websocket
 
+(10)
+vuex loading lazy
 
+(11+12)
+global server store (for users)
+
+(13+14+15)
+http/2 incl. websockets
+http2 over browserslist
+
+(16)
+different languages
+
+(17)
+Client side correct file name
+
+(18-19)
 EXAMPLE
 loading icon
 favicon.ico
 hello!
 calc and chat
 
-
-
-MANY comments
-
-
-
-
-
-
-LATER
-vuex loading lazy
-global server store (for users)
-session
-http/2
-http2 over browserslist
-different languages
-Client side correct file name
+(20-25)
+comments
 Doku
