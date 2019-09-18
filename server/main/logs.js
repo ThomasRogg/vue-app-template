@@ -29,8 +29,15 @@ exports.write = function write(logFile, txt) {
     function doWrite() {
         log.writing = true;
         fs.open(fileName, 'a', (err, fd) => {
+            if(err) {
+                stderrWrite(err.toString() + '\n');
+                log.writing = false;
+                return;
+            }
+
             fs.fstat(fd, (err, stats) => {
                 if(err) {
+                    stderrWrite(err.toString() + '\n');
                     fs.close(fd, (err) => {
                         log.writing = false;
                     });
@@ -46,7 +53,18 @@ exports.write = function write(logFile, txt) {
                     });
                 } else {
                     fs.write(fd, buf, 0, buf.length, null, (err, written, buffer) => {
+                        if(err) {
+                            stderrWrite(err.toString() + '\n');
+                            fs.close(fd, (err) => {
+                                log.writing = false;
+                            });
+                            return;
+                        }
+
                         fs.close(fd, (err) => {
+                            if(err)
+                                stderrWrite(err.toString() + '\n');
+
                             log.writing = false;
                             if(log.data.length)
                                 doWrite();
