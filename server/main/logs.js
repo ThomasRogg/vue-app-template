@@ -10,13 +10,6 @@ let stderrWrite = process.stderr.write.bind(process.stderr);
 
 let logData = {}, waitWriteCallbacks = [];
 
-exports.waitWrite = function(callback) {
-    if(Object.keys(logData).length)
-        waitWriteCallbacks.push(callback);
-    else
-        callback();
-};
-
 exports.write = function write(logFile, txt) {
     let now = new Date();
 
@@ -132,17 +125,21 @@ async function cleanLogs() {
     setTimeout(cleanLogs, 60 * 60 * 1000);
 }
 
-exports.init = async function init() {
-    if(config.REMOVE_LOG_AFTER_DAYS)
-        await cleanLogs();
+exports.waitWrite = function(callback) {
+    if(Object.keys(logData).length)
+        waitWriteCallbacks.push(callback);
+    else
+        callback();
+};
 
+exports.init = async function init() {
     // redirect stdout and stderr to log file by overriding
 	// the write function of the underlying stream
     // this override is on a global level
 	process.stdout.write = (string, encoding) => {
         if(config.CONSOLE_STDOUT)
             stdoutWrite(string, encoding);
-        if(config.CONSOLE_LOGFILE) {
+        if(config.CONSOLE_LOG_FILE) {
             exports.write('main', 'info:  ' + string);
         }
 	};
@@ -150,7 +147,10 @@ exports.init = async function init() {
     process.stderr.write = (string, encoding) => {
         if(config.CONSOLE_STDOUT)
             stderrWrite(string, encoding);
-        if(config.CONSOLE_LOGFILE)
+        if(config.CONSOLE_LOG_FILE)
             exports.write('main', 'error: ' + string);
     };
+
+    if(config.REMOVE_LOG_AFTER_DAYS)
+        await cleanLogs();
 }

@@ -30,9 +30,10 @@ process.on('SIGTERM', exitGracefully);
 
 async function main() {
     try {
+        await logs.init();
+
         console.log('Process initializing...');
 
-        await logs.init();
         await files.init();
         await ssr.init();
 
@@ -57,7 +58,11 @@ async function main() {
                 sslPromises.push(fs.promises.readFile(config.HTTPS_SSL_CA));
             sslPromises = await Promise.all(sslPromises);
 
-            let server = https.createServer(web.httpsRequest);
+            let server = https.createServer({
+                key: sslPromises[0],
+                cert: sslPromises[1],
+                ca: sslPromises[2]
+            }, web.httpsRequest);
             server.on('error', (err) => {
                 console.error(err,server.listening);
                 if(!server.listening)

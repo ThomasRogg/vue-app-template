@@ -1,22 +1,28 @@
 {
-  "name": "vue-app-template",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server/main/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "neonious GmbH",
-  "dependencies": {
-    "@babel/core": "^7.6.0",
-    "@babel/preset-env": "^7.6.0",
-    "babel-preset-minify": "^0.5.1",
-    "core-js-builder": "^3.2.1",
-    "normalize.css": "^8.0.1",
-    "regenerator-runtime": "^0.13.3",
-    "vue": "^2.6.10",
-    "vue-router": "^3.1.3",
-    "vue-server-renderer": "^2.6.10",
-    "vuex": "^3.1.1"
-  }
+    "name": "vue-app-template",
+    "description": "App template for Vue+Vuex development with many features.",
+    "author": "neonious GmbH",
+    "version": "1.0.0",
+    "license": "MIT",
+    "main": "server/main/index.js",
+    "scripts": {
+        "test": "node index.js test",
+        "test-ssr": "node index.js test-ssr",
+        "production": "node index.js production",
+        "start": "node index.js start",
+        "stop": "node index.js stop",
+        "restart": "node index.js restart"
+    },
+    "dependencies": {
+        "@babel/core": "^7.6.0",
+        "@babel/preset-env": "^7.6.0",
+        "babel-preset-minify": "^0.5.1",
+        "core-js-builder": "^3.2.1",
+        "normalize.css": "^8.0.1",
+        "regenerator-runtime": "^0.13.3",
+        "vue": "^2.6.10",
+        "vue-router": "^3.1.3",
+        "vue-server-renderer": "^2.6.10",
+        "vuex": "^3.1.1"
+    }
 }

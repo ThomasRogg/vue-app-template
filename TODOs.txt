@@ -2,11 +2,6 @@
 
 17.09.2019
 
-(1)
-three modes prod devel-dynamic devel-ssr
-add package.json scripts (production and debug) .. info port
-license in package.json
-
 (2)
 importCSS
 importJS

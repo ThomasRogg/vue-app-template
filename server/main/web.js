@@ -151,7 +151,7 @@ function handleRequest(req, res) {
     }
     req.baseURL = proto + host + port + '/';
 
-    if(config.ACCESS_LOGFILE)
+    if(config.ACCESS_LOG_FILE)
         logs.write('access', req.socket.remoteAddress + ' ' + req.method + ' ' + proto + host + port + req.url + '\n');
 
     req.on('data', (chunk) => {
