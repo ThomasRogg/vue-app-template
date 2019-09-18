@@ -5,8 +5,6 @@
 (1)
 config: keep in background
 three modes prod devel-dynamic devel-ssr
-listening on port...
-error when port used => close
 add package.json scripts (production and debug) .. info port
 license in package.json
 
@@ -21,9 +19,6 @@ title filter
 
 (4)
 add logfile for url
-auto rotate and remove
-logfile buffer.concat
-logfile entry on exit
 
 (5)
 CSS conflict info
