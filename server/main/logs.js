@@ -8,7 +8,14 @@ const config    = require('../../config/config');
 let stdoutWrite = process.stdout.write.bind(process.stdout);
 let stderrWrite = process.stderr.write.bind(process.stderr);
 
-let logData = {};
+let logData = {}, waitWriteCallbacks = [];
+
+exports.waitWrite = function(callback) {
+    if(Object.keys(logData).length)
+        waitWriteCallbacks.push(callback);
+    else
+        callback();
+};
 
 exports.write = function write(logFile, txt) {
     let now = new Date();
@@ -43,8 +50,15 @@ exports.write = function write(logFile, txt) {
                             log.writing = false;
                             if(log.data.length)
                                 doWrite();
-                            else
+                            else {
                                 delete logData[fileName];
+                                if(!Object.keys(logData).length) {
+                                    let cbs = waitWriteCallbacks;
+                                    waitWriteCallbacks = [];
+                                    for(let i = 0; i < cbs.length; i++)
+                                        cbs[i]();
+                                }
+                            }
                         });
                     });
                 }
@@ -59,37 +73,42 @@ async function cleanLogs() {
     let now = new Date();
     now.setHours(0);
 
-    let logFiles = await fs.promises.readdir(path.join(__dirname, '../../logs'));
-    for(let i = 0; i < logFiles.length; i++) {
-        let logFile = logFiles[i];
-        if(logFile == '.' || logFile == '..')
-            continue;
+    try {
+        let logFiles = await fs.promises.readdir(path.join(__dirname, '../../logs'));
+        for(let i = 0; i < logFiles.length; i++) {
+            let logFile = logFiles[i];
+            if(logFile == '.' || logFile == '..')
+                continue;
 
-        let parts = logFile.split('-');
-        if(parts.length >= 4) {
-            let lastParts = parts[parts.length - 1].split('.');
-            if(lastParts.length == 2 && lastParts[1] == 'txt') {
-                let year = parts[parts.length - 3] | 0;
-                let month = parts[parts.length - 2] | 0;
-                let day = lastParts[0] | 0;
+            let parts = logFile.split('-');
+            if(parts.length >= 4) {
+                let lastParts = parts[parts.length - 1].split('.');
+                if(lastParts.length == 2 && lastParts[1] == 'txt') {
+                    let year = parts[parts.length - 3] | 0;
+                    let month = parts[parts.length - 2] | 0;
+                    let day = lastParts[0] | 0;
 
-                if(year >= 2000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-                    let date = new Date(year, month - 1, day);
-                    let daysDiff = Math.round((now.getTime() - date.getTime()) / (24 * 3600 * 1000));
-                    if(daysDiff >= config.REMOVE_LOG_AFTER_DAYS) {
-                        try {
-                            await fs.promises.unlink(path.join(__dirname, '../../logs/') + logFile);
-                        } catch(err) {
-                            console.error(err);
+                    if(year >= 2000 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+                        let date = new Date(year, month - 1, day);
+                        let daysDiff = Math.round((now.getTime() - date.getTime()) / (24 * 3600 * 1000));
+                        if(daysDiff >= config.REMOVE_LOG_AFTER_DAYS) {
+                            try {
+                                await fs.promises.unlink(path.join(__dirname, '../../logs/') + logFile);
+                            } catch(err) {
+                                console.error(err);
+                            }
                         }
-                    }
 
-                    continue;
+                        continue;
+                    }
                 }
             }
-        }
 
-        console.error('Found log file "' + logFile + '" with unknown file name format, ignoring');
+            console.error('Found log file "' + logFile + '" with unknown file name format, ignoring');
+        }
+    } catch(err) {
+        setTimeout(cleanLogs, 60 * 60 * 1000);
+        throw err;
     }
 
     setTimeout(cleanLogs, 60 * 60 * 1000);

@@ -11,15 +11,19 @@ const web       = require('./web');
 const files     = require('./files');
 const ssr       = require('./ssr');
 
-process.on('uncaughtException', console.error);
-
-function exitGracefully() {
-    process.exit(0);
-}
+if(!config.EXIT_ON_UNCAUGHT)
+    process.on('uncaughtException', console.error);
 
 process.on('SIGHUP', config.EXIT_ON_SHELL_CLOSE ? exitGracefully : () => {
     console.log('Terminal closed. Now running as deamon.');
 });
+
+function exitGracefully() {
+    console.log('Process exiting...');
+    logs.waitWrite(() => {
+        process.exit(0);
+    });
+}
 process.on('SIGINT', exitGracefully);
 process.on('SIGQUIT', exitGracefully);
 process.on('SIGTERM', exitGracefully);
@@ -36,8 +40,9 @@ async function main() {
         if(config.HTTP_PORT) {
             let server = http.createServer(web.httpRequest);
             server.on('error', (err) => {
-                console.error(err);
-                process.exit(1);
+                console.error(err,server.listening);
+                if(!server.listening)
+                    process.exit(1);
             });
             server.listen(config.HTTP_PORT);
 
@@ -54,8 +59,9 @@ async function main() {
 
             let server = https.createServer(web.httpsRequest);
             server.on('error', (err) => {
-                console.error(err);
-                process.exit(1);
+                console.error(err,server.listening);
+                if(!server.listening)
+                    process.exit(1);
             });
             server.listen(config.HTTPS_PORT);
 

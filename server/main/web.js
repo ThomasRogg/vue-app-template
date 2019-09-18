@@ -5,6 +5,7 @@ const url       = require('url');
 
 const config    = require('../../config/config');
 
+const logs      = require('./logs');
 const files     = require('./files');
 const ssr       = require('./ssr');
 
@@ -149,6 +150,9 @@ function handleRequest(req, res) {
             host = '[' + host + ']';
     }
     req.baseURL = proto + host + port + '/';
+
+    if(config.ACCESS_LOGFILE)
+        logs.write('access', req.socket.remoteAddress + ' ' + req.method + ' ' + proto + host + port + req.url + '\n');
 
     req.on('data', (chunk) => {
         if(!data)

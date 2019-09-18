@@ -3,7 +3,6 @@
 17.09.2019
 
 (1)
-config: keep in background
 three modes prod devel-dynamic devel-ssr
 add package.json scripts (production and debug) .. info port
 license in package.json
@@ -16,9 +15,6 @@ fetch
 (3)
 head title and meta tags and script and style tags
 title filter
-
-(4)
-add logfile for url
 
 (5)
 CSS conflict info

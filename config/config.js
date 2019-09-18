@@ -10,10 +10,13 @@ if(args.length != 1 || (args[0] != 'production' && args[0] != 'devel-ssr' && arg
 
 exports.PRODUCTION              = false;
 
-exports.EXIT_ON_SHELL_CLOSE     = exports.PRODUCTION;
+exports.EXIT_ON_UNCAUGHT        = !exports.PRODUCTION;
+exports.EXIT_ON_SHELL_CLOSE     = !exports.PRODUCTION;
+
 exports.CONSOLE_STDOUT          = !exports.PRODUCTION;
 exports.CONSOLE_LOGFILE         = true;
 
+exports.ACCESS_LOGFILE          = true;
 exports.REMOVE_LOG_AFTER_DAYS   = 30;
 
 exports.HTTP_PORT               = exports.PRODUCTION ? 80 : 8000;
